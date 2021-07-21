@@ -200,8 +200,7 @@ pip3 install imutils
 
 1. Need to setup GUI to maximum screen size automatically and adjust widgets accordingly
 2. Need to pass value of slider dynamically to objdetect()
-3. Move objdetect() as global function and need to pass file path as returned from browseFiles() to objdetect()
-4. Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
+3. Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
 ## References
 
