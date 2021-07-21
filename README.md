@@ -15,6 +15,7 @@ A GUI model of a software prototype with latest features developed to aid survei
 
 <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white"/> <img src="https://img.shields.io/badge/linux-E95420?style=for-the-badge&logo=linux&logoColor=white"/>
 
+## [Executable File](https://drive.google.com/drive/folders/1ZYFpSr_3Te1kWvIpm7u3i2XIduURa4_n?usp=sharing)
 
 ## Screenshot
 
@@ -189,14 +190,18 @@ pip3 install imutils
 
 </div>
 
-
 ## Work under Progress
 
 1. Multiple image processing parameters are being considered to be integrated into the GUI.
 2. Enabling IP Camera based API for better monitoring and control
 3. Automatic detection of the connected surveillance devices to be enabled as a list
 
+## Help Required
 
+1. Need to setup GUI to maximum screen size automatically and adjust widgets accordingly
+2. Need to pass value of slider dynamically to objdetect()
+3. Move objdetect() as global function and need to pass file path as returned from browseFiles() to objdetect()
+4. Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
 ## References
 
