@@ -79,67 +79,71 @@ label_file_explorer.grid(column = 1, row = 1)
 #____________________ADDING FUNCTIONALITES_________________________
 
 def browseFiles():
+   global source_file
    source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
    label_file_explorer.configure(text=""+source_file)
+   return source_file
 
-    def drawRectangle(frame, minus_frame):
-            if(is_blur):
-                    minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
-            minus_Matrix = np.float32(minus_frame)	
-            if(is_close):
-                    for i in range(get_current_value1()):
-                            minus_Matrix = dilate(minus_Matrix, kernel_d)
-                    
-                    for i in range(get_current_value2()):
-                            minus_Matrix = erode(minus_Matrix, kernel_e)
-                    
-            minus_Matrix = np.clip(minus_Matrix, 0, 255)
-            minus_Matrix = np.array(minus_Matrix, np.uint8)
-            contours, hierarchy = findContours(minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
-            for c in contours:
-                    (x, y, w, h) = boundingRect(c)	
-                    rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    if( is_draw_ct ):
-                            drawContours(frame, contours, -1, (0, 255, 255), 2)
-            imshow('result', frame)
-            
 
 #Move objdetect() as global function and need to pass file path as returned from browseFiles() to objdetect()
 #Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
-    def objdetect():
-            capture = VideoCapture(str(source_file));
-            while(1):
-                    (ret_old, old_frame) = capture.read()                    
-                    gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-                    if(is_blur):
-                            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-                    oldBlurMatrix = np.float32(gray_oldframe)
-                    accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-                    while(True):
-                            ret, frame = capture.read()                            
-                            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-                            if(is_blur):
-                                    newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-                            else:
-                                    newBlur_frame = gray_frame
-                            newBlurMatrix = np.float32(newBlur_frame)
-                            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-                            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-                            accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
-                            imshow('Input', frame)
-                            drawRectangle(frame, minus_frame)
-                            if cv2.waitKey(60) & 0xFF == ord('q'):
-                                    break
-                    capture.release() 
-                    cv2.destroyAllWindows()
+def drawRectangle(frame, minus_frame):
+	if(is_blur):
+		minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
+	minus_Matrix = np.float32(minus_frame)	
+	if(is_close):
+		for i in range(get_current_value1()):
+			minus_Matrix = dilate(minus_Matrix, kernel_d)
+		
+		for i in range(get_current_value2()):
+			minus_Matrix = erode(minus_Matrix, kernel_e)
+		
+	minus_Matrix = np.clip(minus_Matrix, 0, 255)
+	minus_Matrix = np.array(minus_Matrix, np.uint8)
+	contours, hierarchy = findContours(minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
+	for c in contours:
+		(x, y, w, h) = boundingRect(c)	
+		rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		if( is_draw_ct ):
+			drawContours(frame, contours, -1, (0, 255, 255), 2)
+	imshow('result', frame)
 
-    objdetect()
+def objdetect():
+	
+	capture = VideoCapture(source_file);
+	while(1):
+		(ret_old, old_frame) = capture.read()
+		
+		gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+		if(is_blur):
+			gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+		oldBlurMatrix = np.float32(gray_oldframe)
+		accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+		while(True):
+			ret, frame = capture.read()	
+			
+			gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+			if(is_blur):
+				newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+			else:
+				newBlur_frame = gray_frame
+			newBlurMatrix = np.float32(newBlur_frame)
+			minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+			ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+			accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
+			imshow('Input', frame)
+			
+			drawRectangle(frame, minus_frame)
+			if cv2.waitKey(60) & 0xFF == ord('q'):
+				break
+		capture.release() 
+		cv2.destroyAllWindows()
    
    
 C1=Button(window,text = "Browse",font=("Times New Roman",12, 'bold'),command=browseFiles).place(x=100,y=10)
 C2=Button(window,text="Live Input",font=("Times New Roman",12, 'bold'),state=DISABLED).place(x=300,y=10)
-C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold')).place(x=880,y=10)
+C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
 C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold')).place(x=1090,y=10)
 
 
