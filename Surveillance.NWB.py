@@ -30,7 +30,7 @@ fac = 2                                 #initializing_integer_variables
    
 window=Tk()
 window.configure(background="grey64");
-window.title("NWB")
+window.title("Surveillance System")
 window.resizable(0,0)
 window.geometry('1300x680')
 
@@ -72,7 +72,7 @@ value_label2.place(x=995,y=82)
 
 #_____________________CREATING BUTTONS______________________
 
-title = Label(window, text = "Network Without Borders",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
+title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
 label_file_explorer = Label(window, text = "", fg = "blue")
 label_file_explorer.grid(column = 1, row = 1)
 
@@ -84,6 +84,36 @@ def browseFiles():
    label_file_explorer.configure(text=""+source_file)
    return source_file
 
+def live():
+    def objdetect():
+        capture = VideoCapture(0)
+        while(1):
+            (ret_old, old_frame) = capture.read()
+            gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+            if(is_blur):
+                gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+            oldBlurMatrix = np.float32(gray_oldframe)
+            accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+            while(True):
+                ret, frame = capture.read()	
+
+                gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+                if(is_blur):
+                    newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+                else:
+                    newBlur_frame = gray_frame
+                newBlurMatrix = np.float32(newBlur_frame)
+                minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+                ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+                accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
+                imshow('Input', frame)
+                drawRectangle(frame, minus_frame)
+                if cv2.waitKey(60) & 0xFF == ord('q'):
+                    break
+            capture.release() 
+            cv2.destroyAllWindows()
+    objdetect()
+   
 #Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
 def drawRectangle(frame, minus_frame):
@@ -112,7 +142,6 @@ def objdetect():
 	capture = VideoCapture(source_file);
 	while(1):
 		(ret_old, old_frame) = capture.read()
-		
 		gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
 		if(is_blur):
 			gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
@@ -131,7 +160,6 @@ def objdetect():
 			ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
 			accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
 			imshow('Input', frame)
-			
 			drawRectangle(frame, minus_frame)
 			if cv2.waitKey(60) & 0xFF == ord('q'):
 				break
@@ -140,7 +168,7 @@ def objdetect():
    
    
 C1=Button(window,text = "Browse",font=("Times New Roman",12, 'bold'),command=browseFiles).place(x=100,y=10)
-C2=Button(window,text="Live Input",font=("Times New Roman",12, 'bold'),state=DISABLED).place(x=300,y=10)
+C2=Button(window,text="Live Input",font=("Times New Roman",12, 'bold'),command=live).place(x=300,y=10)
 C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
 C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold')).place(x=1090,y=10)
 
