@@ -79,7 +79,8 @@ label_file_explorer.grid(column = 1, row = 1)
 #____________________ADDING FUNCTIONALITES_________________________
 
 def browseFiles():
-    label_file_explorer.configure(text=""+source_file)
+   source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
+   label_file_explorer.configure(text=""+source_file)
 
     def drawRectangle(frame, minus_frame):
             if(is_blur):
