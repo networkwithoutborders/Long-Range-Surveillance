@@ -84,8 +84,6 @@ def browseFiles():
    label_file_explorer.configure(text=""+source_file)
    return source_file
 
-
-#Move objdetect() as global function and need to pass file path as returned from browseFiles() to objdetect()
 #Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
 def drawRectangle(frame, minus_frame):
