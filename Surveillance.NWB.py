@@ -30,7 +30,7 @@ fac = 2                                 #initializing_integer_variables
    
 window=Tk()
 window.configure(background="grey64");
-window.title("Surveillance System - NWB")
+window.title("Surveillance System")
 window.resizable(0,0)
 window.geometry('1300x680')
 
@@ -38,12 +38,10 @@ window.geometry('1300x680')
 
 #_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
 
-clicked= StringVar()
-chkValue1 = BooleanVar()
-chkValue2 = BooleanVar()
+
 current_value1 = IntVar()
 current_value2 = IntVar()
-
+current_value3 = IntVar()
 
 def get_current_value1():
     return int('{}'.format(current_value1.get()))
@@ -68,6 +66,18 @@ slider_label2 = Label(window,text='CF2',font=("Times New Roman",12),fg="black",b
 slider2 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_changed2, variable=current_value2).place(x=890,y=82)
 value_label2 = ttk.Label(window, text=get_current_value2())
 value_label2.place(x=995,y=82)
+
+
+def get_current_value3():
+    return int('{}'.format(current_value3.get()))
+
+def slider_changed3(event3):
+    value_label3.configure(text=get_current_value3())
+
+slider_label3 = Label(window,text='Threshold',font=("Times New Roman",14),fg="black",bg="grey64").place(x=804,y=114)
+slider3 = ttk.Scale(window, from_=50,to=90, orient='horizontal', command=slider_changed3, variable=current_value3).place(x=890,y=114)
+value_label3 = ttk.Label(window, text=get_current_value3())
+value_label3.place(x=995,y=114)
 
 
 #_____________________CREATING BUTTONS______________________
@@ -104,7 +114,7 @@ def live():
                     newBlur_frame = gray_frame
                 newBlurMatrix = np.float32(newBlur_frame)
                 minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-                ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+                ret, minus_frame = threshold(minusMatrix, get_current_value3(), 255.0, THRESH_BINARY)
                 accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
                 imshow('Input', frame)
                 drawRectangle(frame, minus_frame)
@@ -114,7 +124,7 @@ def live():
             cv2.destroyAllWindows()
     objdetect()
    
-#Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
+#Need to fit the  imshow('Object_Detection', frame) inside the GUI (instead of pop up)
 
 def drawRectangle(frame, minus_frame):
 	if(is_blur):
@@ -135,7 +145,7 @@ def drawRectangle(frame, minus_frame):
 		rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		if( is_draw_ct ):
 			drawContours(frame, contours, -1, (0, 255, 255), 2)
-	imshow('result', frame)
+	imshow('Object_Detection', frame)
 
 def objdetect():
 	
@@ -157,7 +167,7 @@ def objdetect():
 				newBlur_frame = gray_frame
 			newBlurMatrix = np.float32(newBlur_frame)
 			minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-			ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+			ret, minus_frame = threshold(minusMatrix, get_current_value3(), 255.0, THRESH_BINARY)
 			accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
 			imshow('Input', frame)
 			drawRectangle(frame, minus_frame)
