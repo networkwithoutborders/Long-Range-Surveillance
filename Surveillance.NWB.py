@@ -30,12 +30,13 @@ fac = 2                                 #initializing_integer_variables
    
 window=Tk()
 window.configure(background="grey64");
-window.title("BoSS")
+window.title("NWB")
 window.resizable(0,0)
 window.geometry('1300x680')
 
-#_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
+#Need to setup GUI to maximum screen size automatically and adjust widgets accordingly
 
+#_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
 
 clicked= StringVar()
 chkValue1 = BooleanVar()
@@ -55,6 +56,7 @@ slider1 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_c
 value_label1 = ttk.Label(window, text=get_current_value1())
 value_label1.place(x=995,y=52)
 
+#Need to pass value of slider dynamically to objdetect()
 
 def get_current_value2():
     return int('{}'.format(current_value2.get()))
@@ -70,23 +72,14 @@ value_label2.place(x=995,y=82)
 
 #_____________________CREATING BUTTONS______________________
 
-
-title = Label(window, text = "Border Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
-
+title = Label(window, text = "Network Without Borders",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
 label_file_explorer = Label(window, text = "", fg = "blue")
 label_file_explorer.grid(column = 1, row = 1)
 
 #____________________ADDING FUNCTIONALITES_________________________
 
 def browseFiles():
-    source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
     label_file_explorer.configure(text=""+source_file)
-
-    '''video_1 = Label(window)
-    video_1.place(x=100,y=100)
-    player1 = tkvideo(str(source_file), video_1, loop = 0, size = (500,500))
-    player1.play()'''
-
 
     def drawRectangle(frame, minus_frame):
             if(is_blur):
@@ -110,20 +103,20 @@ def browseFiles():
             imshow('result', frame)
             
 
+#Move objdetect() as global function and need to pass file path as returned from browseFiles() to objdetect()
+#Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
 
     def objdetect():
             capture = VideoCapture(str(source_file));
             while(1):
-                    (ret_old, old_frame) = capture.read()
-                    
+                    (ret_old, old_frame) = capture.read()                    
                     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
                     if(is_blur):
                             gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
                     oldBlurMatrix = np.float32(gray_oldframe)
                     accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
                     while(True):
-                            ret, frame = capture.read()
-                            
+                            ret, frame = capture.read()                            
                             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
                             if(is_blur):
                                     newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
@@ -134,8 +127,6 @@ def browseFiles():
                             ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
                             accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
                             imshow('Input', frame)
-                            
-                            
                             drawRectangle(frame, minus_frame)
                             if cv2.waitKey(60) & 0xFF == ord('q'):
                                     break
@@ -143,12 +134,8 @@ def browseFiles():
                     cv2.destroyAllWindows()
 
     objdetect()
-
-    '''video_2 = Label(window)
-    video_2.place(x=650,y=100)
-    player2 = tkvideo(objdetect(), video_2, loop = 0, size = (500,500))
-    player2.play()'''
-
+   
+   
 C1=Button(window,text = "Browse",font=("Times New Roman",12, 'bold'),command=browseFiles).place(x=100,y=10)
 C2=Button(window,text="Live Input",font=("Times New Roman",12, 'bold'),state=DISABLED).place(x=300,y=10)
 C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold')).place(x=880,y=10)
@@ -157,10 +144,8 @@ C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'
 
 #___________________FOOTER OF THE GUI WINDOW______________________
 
-
-
 frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=630)
-foot=Label(frame,text = "DIR/ECS/IRDE/PROC(BRR)/20-21/018",font=("Times New Roman",11),fg="black",bg="aqua").place(x=1010,y=645)
+foot=Label(frame,text = "Surveillance System",font=("Times New Roman",11),fg="black",bg="aqua").place(x=1010,y=645)
 window.mainloop()
 
 #____________________END OF PROGRAM______________________
