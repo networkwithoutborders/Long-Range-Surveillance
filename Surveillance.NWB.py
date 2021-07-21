@@ -30,7 +30,7 @@ fac = 2                                 #initializing_integer_variables
    
 window=Tk()
 window.configure(background="grey64");
-window.title("Surveillance System")
+window.title("Surveillance System - NWB")
 window.resizable(0,0)
 window.geometry('1300x680')
 
