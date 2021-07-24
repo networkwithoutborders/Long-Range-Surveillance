@@ -214,6 +214,7 @@ pip3 install imutils
 
 1. https://github.com/SYangChen/Detection-of-Moving-Object 
 2. https://github.com/subeeshvasu/Awesome-Deblurring
+3. https://github.com/samuelt121/Turbulence-Mitigation
 
 
 [Go to Top](#section_name)
