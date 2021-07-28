@@ -23,15 +23,23 @@ Browse and Live Camera
 
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/1.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/6.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Dilation and Erosion
+
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/2.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Turbulence Mitigation
 
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/3.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/4.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
+Region of Interest
+
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/5.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
-<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/6.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
 
 
 ## Hardware and Software Requirements
