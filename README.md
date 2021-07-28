@@ -33,6 +33,8 @@ Turbulence Mitigation
 
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/3.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
+Enhanced Turbulence Mitigation
+
 <img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/4.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
 Region of Interest
