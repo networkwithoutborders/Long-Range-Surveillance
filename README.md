@@ -220,9 +220,10 @@ pip3 install imutils
 
 ## Help Required
 
-1. Need to setup GUI to maximum screen size automatically and adjust widgets accordingly
-2. Need to pass value of slider dynamically to objdetect()
-3. Need to fit the  imshow('result', frame) inside the GUI (instead of pop up)
+1. Need to modify ```deturbulence()``` and ```endeturbulence()``` for webcamera / live input feed
+2. Turbulence mitigation should be followed by object detection method automatically in real-time without any / minimal lag
+3. Need to pass value of slider dynamically to ```objdetect()```
+4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
 
 ## References
 
