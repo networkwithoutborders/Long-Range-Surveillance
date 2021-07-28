@@ -1,7 +1,7 @@
 <h1 align="center"><a name="section_name">Surveillance GUI</a></h1>
 
 <div align="justify">
-A GUI model of a software prototype with latest features developed to aid surveillance systems' monitoring.
+A GUI model of a software prototype with latest features developed to aid long range surveillance without training dataset or ground truth values.
 </div>
 
 <br>
@@ -18,6 +18,7 @@ A GUI model of a software prototype with latest features developed to aid survei
 2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
 3. Need to pass value of slider dynamically / automatically based on ground-truth to ```objdetect()```
 4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
+5. Modify the model to utilise GPU resources (if available) to reduce time complexity
 
 ## Build Status
 
