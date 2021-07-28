@@ -361,7 +361,7 @@ C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),comman
 #___________________FOOTER OF THE GUI WINDOW______________________
 
 frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=430)
-foot=Label(frame,text = "UNIQUE SANCTION CODE: DIR/ECS/IRDE/PROC(BRR)20-21/018",font=("Times New Roman",11),fg="black",bg="aqua").place(x=840,y=445)
+foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=840,y=445)
 window.mainloop()
  
 
