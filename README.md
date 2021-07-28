@@ -20,9 +20,9 @@ A GUI model of a software prototype with latest features developed to aid survei
 ## Screenshot
 
 
+GUI
 
-
-<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/1.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screenshots/1.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
 
 
