@@ -234,8 +234,6 @@ def deturbulence():
             break
         i+=1
     cv2.destroyAllWindows()  
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    SaveVideoFromFrames(concatenatedVid, 25.0, 'Output.avi')
 
 
 def endeturbulence():
@@ -348,10 +346,7 @@ def endeturbulence():
         if cv2.waitKey(20) & 0xFF == ord('q'):
             break
         i+=1
-    cv2.destroyAllWindows()    
-       
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    SaveVideoFromFrames(concatenatedVid, 25.0, source_file+'Comparison_testVideoWiener_MeanRef.avi')
+    cv2.destroyAllWindows() 
     
     
 C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
