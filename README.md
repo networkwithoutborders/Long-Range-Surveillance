@@ -28,8 +28,6 @@ A GUI model of a software prototype with latest features developed to aid long r
 
 <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white"/> <img src="https://img.shields.io/badge/linux-E95420?style=for-the-badge&logo=linux&logoColor=white"/>
 
-## [Executable File](https://drive.google.com/drive/folders/1ZYFpSr_3Te1kWvIpm7u3i2XIduURa4_n?usp=sharing)
-
 ## Screenshot
 
 
