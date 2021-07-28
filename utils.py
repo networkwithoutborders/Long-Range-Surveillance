@@ -65,13 +65,11 @@ def loadImagesFromDir(path, ImageType):
 def loadVideo(VidPath):
     ImagesSequence = []
     cap = cv2.VideoCapture(VidPath)
-    no_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    for _ in range(no_frames):
+    while(1):
         ret, frame = cap.read()
         if ret == True:
-            
-
             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            
     cap.release()
     cv2.destroyAllWindows()
 
