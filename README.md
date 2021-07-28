@@ -1,10 +1,9 @@
 <h1 align="center"><a name="section_name">Surveillance GUI</a></h1>
 
 <div align="justify">
-A GUI model of a software prototype with latest features developed to aid long range surveillance without training dataset or ground truth values.
+A GUI model of a software prototype with latest features developed to aid long range surveillance.  With our literature, we understand that our model performs better  without training dataset or ground truth values. We wish to improve the accuracy of the model and reduce the time complexity.  In our model, we utilised few steps from the references cited below.
+  
 </div>
-
-<br>
 
 
 ## Work under Progress
