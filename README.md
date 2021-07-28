@@ -19,10 +19,27 @@ A GUI model of a software prototype with latest features developed to aid survei
 
 ## Screenshot
 
-GUI
+Browse and Live Camera
 
-<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screenshots/1.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/1.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/6.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Dilation and Erosion
+
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/2.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Turbulence Mitigation
+
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/3.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Enhanced Turbulence Mitigation
+
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/4.png" alt="check box functionality" style="height: 150px; width:200px;"/>
+
+Region of Interest
+
+<img src="https://github.com/Surveillance-NWB/Surveillance/blob/main/GUI_Screrenshots/5.png" alt="check box functionality" style="height: 150px; width:200px;"/>
 
 
 
@@ -198,14 +215,14 @@ pip3 install imutils
 
 ## Work under Progress
 
-1. Enabling IP Camera based API for better monitoring and control
+1. Enabling IP Camera in-built modules for better monitoring and control
 2. Automatic detection of the connected surveillance devices to be enabled as a list
 
 ## Help Required
 
 1. Need to modify ```deturbulence()``` and ```endeturbulence()``` for webcamera / live input feed
-2. Turbulence mitigation should be followed by object detection method automatically in real-time without any / minimal lag
-3. Need to pass value of slider dynamically to ```objdetect()```
+2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
+3. Need to pass value of slider dynamically / automatically based on ground-truth to ```objdetect()```
 4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
 
 ## References
