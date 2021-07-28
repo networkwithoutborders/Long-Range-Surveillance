@@ -6,6 +6,19 @@ A GUI model of a software prototype with latest features developed to aid survei
 
 <br>
 
+
+## Work under Progress
+
+1. Enabling IP Camera in-built modules for better monitoring and control
+2. Automatic detection of the connected surveillance devices to be enabled as a list
+
+## Help Required
+
+1. Need to modify ```deturbulence()``` and ```endeturbulence()``` for webcamera / live input feed
+2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
+3. Need to pass value of slider dynamically / automatically based on ground-truth to ```objdetect()```
+4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
+
 ## Build Status
 
 <img src="https://img.shields.io/badge/build-passing-brightgreen"/> <img src="https://img.shields.io/badge/code-latest-orange"/> <img src="https://img.shields.io/badge/langugage-python-blue"/>
@@ -196,17 +209,6 @@ pip3 install imutils
 
 </div>
 
-## Work under Progress
-
-1. Enabling IP Camera in-built modules for better monitoring and control
-2. Automatic detection of the connected surveillance devices to be enabled as a list
-
-## Help Required
-
-1. Need to modify ```deturbulence()``` and ```endeturbulence()``` for webcamera / live input feed
-2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
-3. Need to pass value of slider dynamically / automatically based on ground-truth to ```objdetect()```
-4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
 
 ## References
 
