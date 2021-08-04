@@ -4,6 +4,8 @@ import tkinter
 from tkinter import*
 from tkinter import ttk
 from tkinter import filedialog
+from filvideostream import FileVideoStream
+from imutils.video import FPS
 from _cffi_backend import callback
 from PIL import ImageTk, Image
 import cv2
