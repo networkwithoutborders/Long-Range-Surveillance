@@ -49,6 +49,7 @@ current_value2 = IntVar()
 
 
 def get_current_value1():
+    print("Dilation value 1: ", current_value1.get())
     return int('{}'.format(current_value1.get()))
 
 
@@ -59,9 +60,10 @@ def slider_changed1(event):
 slider_label1 = Label(window, text='Dilation', font=(
     "Times New Roman", 12), fg="black", bg="grey64").place(x=832, y=52)
 value_label1 = ttk.Label(window, text=get_current_value1())
-slider1 = ttk.Scale(window, from_=5, to=25, orient='horizontal',
+slider1 = ttk.Scale(window, from_=0, to=25, orient='horizontal',
                     command=slider_changed1, variable=current_value1)
-slider1.set(15)
+# slider1.set(15)
+slider1.set(0)
 slider1.place(x=890, y=50)
 value_label1.place(x=995, y=52)
 
@@ -69,6 +71,7 @@ capture = VideoCapture(0)
 
 
 def get_current_value2():
+    print("Erosion value 2: ", current_value2.get())
     return int('{}'.format(current_value2.get()))
 
 
@@ -79,9 +82,10 @@ def slider_changed2(event2):
 slider_label2 = Label(window, text='Erosion', font=(
     "Times New Roman", 12), fg="black", bg="grey64").place(x=832, y=82)
 value_label2 = ttk.Label(window, text=get_current_value2())
-slider2 = ttk.Scale(window, from_=5, to=25, orient='horizontal',
+slider2 = ttk.Scale(window, from_=0, to=25, orient='horizontal',
                     command=slider_changed2, variable=current_value2)
-slider2.set(15)
+# slider2.set(15)
+slider2.set(0)
 slider2.place(x=890, y=82)
 value_label2.place(x=995, y=82)
 
@@ -210,9 +214,6 @@ def objdetect():
 
     # print("Reached here too")
 
-    # capture.release()
-    # cv2.destroyAllWindows()
-
 
 def drawRectangle(frame, minus_frame):
     if(is_blur):
@@ -238,18 +239,15 @@ def drawRectangle(frame, minus_frame):
 
     # For rendering real time video in GUI
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    # ____Dilation and Erosion_____
+    cv2image = cv2.dilate(cv2image, kernel_d, iterations=get_current_value1())
+    cv2image = cv2.erode(cv2image, kernel_e, iterations=get_current_value2())
+    # ____Dilation and Erosion_____
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
     lmain.after(1, objdetect)
-
-    # if cv2.waitKey(1) & 0xFF == ord('q'):
-    #     img = ImageTk.PhotoImage(Image.open(
-    #         r"F:\Deep Learning & ML\SurveillanceProject-SRM\Surveillance\images\no_data.jpg"))
-    #     lmain.imgtk = img
-    #     lmain.configure(image=img)
-    #     capture.release()
 
 
 def deturbulence():
