@@ -14,6 +14,7 @@ import sys
 import time
 import argparse
 import imutils
+import keyboard
 from pathlib import Path
 from utils import *
 import time
@@ -64,6 +65,8 @@ slider1.set(15)
 slider1.place(x=890, y=50)
 value_label1.place(x=995, y=52)
 
+capture = VideoCapture(0)
+
 
 def get_current_value2():
     return int('{}'.format(current_value2.get()))
@@ -95,9 +98,9 @@ label_file_explorer.place(x=20, y=60)
 app = Frame(window, bg="white")
 app.pack(side=LEFT)
 
-img = ImageTk.PhotoImage(Image.open(
+no_data_img = ImageTk.PhotoImage(Image.open(
     r"F:\Deep Learning & ML\SurveillanceProject-SRM\Surveillance\images\no_data.jpg"))
-lmain = Label(app, image=img)
+lmain = Label(app, image=no_data_img)
 lmain.place(y=100)
 lmain.pack(expand="yes")
 
@@ -111,73 +114,104 @@ def browseFiles():
     label_file_explorer.configure(text="File: "+source_file)
     return source_file
 
+# ___________________Old Object detection code___________________
+
+# def objdetect():
+#     # source_file = browseFiles()
+#     # RealTime data
+#     capture = VideoCapture(0)
+#     while(1):
+#         (ret_old, old_frame) = capture.read()
+#         gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+#         if(is_blur):
+#             gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+#         oldBlurMatrix = np.float32(gray_oldframe)
+#         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+#         while(True):
+#             ret, frame = capture.read()
+#             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+#             if(is_blur):
+#                 newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+#             else:
+#                 newBlur_frame = gray_frame
+#             newBlurMatrix = np.float32(newBlur_frame)
+#             minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+#             ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+#             accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
+
+#             imshow('Input', frame)
+
+#             drawRectangle(frame, minus_frame)
+
+#             if cv2.waitKey(20) & 0xFF == ord('q'):
+#                 break
+#         capture.release()
+#         cv2.destroyAllWindows()
+
+
+# def drawRectangle(frame, minus_frame):
+#     if(is_blur):
+#         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
+#     minus_Matrix = np.float32(minus_frame)
+#     if(is_close):
+#         for i in range(get_current_value1()):
+#             minus_Matrix = dilate(minus_Matrix, kernel_d)
+
+#         for i in range(get_current_value2()):
+#             minus_Matrix = erode(minus_Matrix, kernel_e)
+
+#     minus_Matrix = np.clip(minus_Matrix, 0, 255)
+#     minus_Matrix = np.array(minus_Matrix, np.uint8)
+#     contours, hierarchy = findContours(
+#         minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
+#     for c in contours:
+#         (x, y, w, h) = boundingRect(c)
+#         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+#         if(is_draw_ct):
+#             drawContours(frame, contours, -1, (0, 255, 255), 1)
+#     imshow('Object_Detection', frame)
+
+# ___________________New Object detection code___________________
 
 def objdetect():
     # source_file = browseFiles()
     # RealTime data
-    capture = VideoCapture(0)
-    while(1):
-        (ret_old, old_frame) = capture.read()
-        gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-        if(is_blur):
-            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-        oldBlurMatrix = np.float32(gray_oldframe)
-        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-        while(True):
-            ret, frame = capture.read()
-            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-            if(is_blur):
-                newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-            else:
-                newBlur_frame = gray_frame
-            newBlurMatrix = np.float32(newBlur_frame)
-            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-            accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
+    if keyboard.is_pressed('q'):
+        try:
+            capture.release()
+            lmain.configure(image=no_data_img)
+            print("Capture released")
+        except:
+            print("Some error has occured")
 
-            imshow('Input', frame)
+    (ret_old, old_frame) = capture.read()
+    gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+    if(is_blur):
+        gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+    oldBlurMatrix = np.float32(gray_oldframe)
+    accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
 
-            # Showing video feed integrated in GUI window
-            # frame_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-            # img = Image.fromarray(frame_img)
-            # imgtk = ImageTk.PhotoImage(image=img)
-            # lmain.imgtk = imgtk
-            # lmain.configure(image=imgtk)
-            # lmain.after(1, objdetect)
+    # print("Reached here")
 
-            ###
-            drawRectangle(frame, minus_frame)
-            # if(is_blur):
-            #     minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
-            # minus_Matrix = np.float32(minus_frame)
-            # if(is_close):
-            #     for i in range(get_current_value1()):
-            #         minus_Matrix = dilate(minus_Matrix, kernel_d)
+    ret, frame = capture.read()
+    gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+    if(is_blur):
+        newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+    else:
+        newBlur_frame = gray_frame
+    newBlurMatrix = np.float32(newBlur_frame)
+    minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+    ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+    accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
-            #     for i in range(get_current_value2()):
-            #         minus_Matrix = erode(minus_Matrix, kernel_e)
+    # imshow('Input', frame)
 
-            # minus_Matrix = np.clip(minus_Matrix, 0, 255)
-            # minus_Matrix = np.array(minus_Matrix, np.uint8)
-            # contours, hierarchy = findContours(
-            #     minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
-            # for c in contours:
-            #     (x, y, w, h) = boundingRect(c)
-            #     rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            #     if(is_draw_ct):
-            #         drawContours(frame, contours, -1, (0, 255, 255), 1)
-            # # imshow('Object_Detection', frame)
-            # frame_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-            # img = Image.fromarray(frame)
-            # imgtk = ImageTk.PhotoImage(image=img)
-            # lmain.imgtk = imgtk
-            # lmain.configure(image=imgtk)
-            # window.after(1, objdetect)
+    drawRectangle(frame, minus_frame)
 
-            if cv2.waitKey(20) & 0xFF == ord('q'):
-                break
-        capture.release()
-        cv2.destroyAllWindows()
+    # print("Reached here too")
+
+    # capture.release()
+    # cv2.destroyAllWindows()
 
 
 def drawRectangle(frame, minus_frame):
@@ -200,14 +234,22 @@ def drawRectangle(frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 1)
-    imshow('Object_Detection', frame)
+    # imshow('Object_Detection', frame)
 
     # For rendering real time video in GUI
-    # frame_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-    # img = Image.fromarray(frame_img)
-    # imgtk = ImageTk.PhotoImage(image=img)
-    # lmain.imgtk = imgtk
-    # lmain.configure(image=imgtk)
+    cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    img = Image.fromarray(cv2image)
+    imgtk = ImageTk.PhotoImage(image=img)
+    lmain.imgtk = imgtk
+    lmain.configure(image=imgtk)
+    lmain.after(1, objdetect)
+
+    # if cv2.waitKey(1) & 0xFF == ord('q'):
+    #     img = ImageTk.PhotoImage(Image.open(
+    #         r"F:\Deep Learning & ML\SurveillanceProject-SRM\Surveillance\images\no_data.jpg"))
+    #     lmain.imgtk = img
+    #     lmain.configure(image=img)
+    #     capture.release()
 
 
 def deturbulence():
