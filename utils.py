@@ -130,15 +130,18 @@ def loadImagesFromDir(path, ImageType):
 
 
 def loadVideo(VideoPath):
-    print("loadVideo is called")
     ImagesSequence = []
-    cap = cv2.VideoCapture(VideoPath)
-    ret, frame = cap.read()
-    while ret:
+    fvs=FileVideoStream(VideoPath).start()
+    time.sleep(1.0)
+    fps=FPS().start()
+    while fvs.more():
+        frame=fvs.read()
         ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-        ret, frame = cap.read()
-    print("loadVideo ended")
-    # cap.release()
+        fps.update()
+    fps.stop()
+    #print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+    cv2.destroyAllWindows()
+    fvs.stop()
     return ImagesSequence
 
 
