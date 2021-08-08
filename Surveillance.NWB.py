@@ -2,7 +2,7 @@
 
 import tkinter
 from tkinter import*
-from tkinter import ttk
+from tkinter import ttk, Button
 from tkinter import filedialog
 from _cffi_backend import callback
 from PIL import ImageTk, Image
@@ -19,7 +19,6 @@ import time
 from skimage.restoration import wiener, richardson_lucy
 from scipy.special import j1
 
-
 #_____________________USER-DEFINED FUNCTIONS______________________
 
 kernel_d = np.ones((3,3), np.uint8)
@@ -32,12 +31,11 @@ fac = 2                                 #initializing_integer_variables
 
 #___________________INITALIZING THE GUI WINDOW______________________
 
-   
-window=Tk()
+window = Tk()
+window.geometry('1300x480')
 window.configure(background="grey64");
 window.title("Surveillance System")
 window.resizable(0,0)
-window.geometry('1300x480')
 
 #_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
 
@@ -52,12 +50,12 @@ def get_current_value1():
 def slider_changed1(event):
     value_label1.configure(text=get_current_value1())
 
-slider_label1 = Label(window,text='Dilation',font=("Times New Roman",12),fg="black",bg="grey64").place(x=832,y=52)
+slider_label1 = Label(window,text='Dilation',font=("Times New Roman",12),fg="black",bg="grey64").place(x=1032,y=52)
 value_label1 = ttk.Label(window, text=get_current_value1())
 slider1 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_changed1, variable=current_value1)
 slider1.set(15)
-slider1.place(x=890,y=50)
-value_label1.place(x=995,y=52)
+slider1.place(x=1090,y=50)
+value_label1.place(x=1095,y=52)
 
 
 def get_current_value2():
@@ -66,57 +64,28 @@ def get_current_value2():
 def slider_changed2(event2):
     value_label2.configure(text=get_current_value2())
 
-slider_label2 = Label(window,text='Erosion',font=("Times New Roman",12),fg="black",bg="grey64").place(x=832,y=82)
+slider_label2 = Label(window,text='Erosion',font=("Times New Roman",12),fg="black",bg="grey64").place(x=1032,y=82)
 value_label2 = ttk.Label(window, text=get_current_value2())
 slider2 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_changed2, variable=current_value2)
 slider2.set(15)
-slider2.place(x=890,y=82)
-value_label2.place(x=995,y=82)
-
+slider2.place(x=1090,y=82)
+value_label2.place(x=1095,y=82)
 
 #_____________________CREATING BUTTONS______________________
 
-title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
-label_file_explorer = Label(window, text = "", fg = "blue")
-label_file_explorer.place(x=20,y=60)
+title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=520, y=400)
+#label_file_explorer = Label(window, text = "", fg = "blue")
+#label_file_explorer.place(x=20,y=60)
 
 #____________________ADDING FUNCTIONALITES_________________________
 
-def browseFiles():
-    global source_file
-    source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
-    label_file_explorer.configure(text="File: "+source_file)
-    return source_file
+#Label(window).pack(ipadx=0,ipady=0)
+f1 = LabelFrame(window,height=360,width=660,padx=0,pady=0)
+f1.pack()
+L1 = Label(f1,height=360,width=640,padx=0,pady=0,anchor='nw')
+L1.pack(ipadx=0,ipady=0)
+cap = cv2.VideoCapture(0)
 
-def objdetect():
-    source_file=browseFiles()
-    capture = VideoCapture(source_file)
-    while(1):
-        (ret_old, old_frame) = capture.read()
-        gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-        if(is_blur):
-            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-        oldBlurMatrix = np.float32(gray_oldframe)
-        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-        while(True):
-            ret, frame = capture.read()
-            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-            if(is_blur):
-                newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-            else:
-                newBlur_frame = gray_frame
-            newBlurMatrix = np.float32(newBlur_frame)
-            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-            accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
-            imshow('Input', frame)
-            drawRectangle(frame, minus_frame)
-            if cv2.waitKey(20) & 0xFF == ord('q'):
-                break
-        capture.release() 
-        cv2.destroyAllWindows()
-
-   
 def drawRectangle(frame, minus_frame):
 	if(is_blur):
 		minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
@@ -136,10 +105,41 @@ def drawRectangle(frame, minus_frame):
 		rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		if( is_draw_ct ):
 			drawContours(frame, contours, -1, (0, 255, 255), 2)
-	imshow('Object_Detection', frame)
+
+
+
+def objdetect():
+    while(1):
+        (ret_old, old_frame) = cap.read()
+        gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+        if(is_blur):
+            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+        oldBlurMatrix = np.float32(gray_oldframe)
+        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+        while True:
+            ret, frame = cap.read()
+            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+            if(is_blur):
+                newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+            else:
+                newBlur_frame = gray_frame
+        
+            newBlurMatrix = np.float32(newBlur_frame)
+            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+            accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
+    
+            drawRectangle(frame, minus_frame)
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            frame = cv2.flip(frame,1)
+            frame = ImageTk.PhotoImage(Image.fromarray(frame))
+            L1['image'] = frame
+            window.update()
+    
+    
+
 
 def deturbulence():
-    source_file=browseFiles()
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -155,8 +155,7 @@ def deturbulence():
     readVideo = 1  
     ReferenceInitializationOpt = 2 # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
 
-    video_path = source_file
-    ImagesSequence = loadVideo(video_path)
+    ImagesSequence = cap.read()
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
 
@@ -233,11 +232,12 @@ def deturbulence():
         if cv2.waitKey(20) & 0xFF == ord('q'):
             break
         i+=1
+        objdetect()
+        endeturbulence()
     cv2.destroyAllWindows()  
 
 
 def endeturbulence():
-    source_file=browseFiles()
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -252,8 +252,8 @@ def endeturbulence():
     fno = m_focal_length / m_aperture
     readVideo = 1
     ReferenceInitializationOpt = 2
-    video_path = source_file
-    ImagesSequence = loadVideo(video_path)
+    
+    ImagesSequence = cv2.VideoCapture(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi_plate_250 = (1092, 830, 564, 228)
@@ -343,20 +343,21 @@ def endeturbulence():
         print('Frame analysis time: ', time.time() - t)
         cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
         cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
-        if cv2.waitKey(20) & 0xFF == ord('q'):
+        if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         i+=1
-    cv2.destroyAllWindows() 
-    
-    
-C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
-C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=1090,y=10)
-C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=1090,y=60)
+    cv2.destroyAllWindows()
+
+#deturbulence()
+#endeturbulence()
+C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'), command=objdetect).place(x=20,y=60)
+C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=20,y=100)
+C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=20,y=140)
 
 #___________________FOOTER OF THE GUI WINDOW______________________
 
-frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=430)
-foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=840,y=445)
+#frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=430)
+#foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=140,y=445)
 window.mainloop()
  
 
