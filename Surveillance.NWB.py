@@ -31,6 +31,8 @@ is_blur = False  # initializing_boolean_variables
 is_close = True  # initializing_boolean_variables
 is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
+isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
+
 
 # ___________________INITALIZING THE GUI WINDOW______________________
 
@@ -49,7 +51,7 @@ current_value2 = IntVar()
 
 
 def get_current_value1():
-    print("Dilation value 1: ", current_value1.get())
+    # print("Dilation value 1: ", current_value1.get())
     return int('{}'.format(current_value1.get()))
 
 
@@ -71,7 +73,7 @@ capture = VideoCapture(0)
 
 
 def get_current_value2():
-    print("Erosion value 2: ", current_value2.get())
+    # print("Erosion value 2: ", current_value2.get())
     return int('{}'.format(current_value2.get()))
 
 
@@ -177,16 +179,24 @@ def browseFiles():
 
 # ___________________New Object detection code___________________
 
+def switchCapture():
+    global capture
+    capture = VideoCapture(0)
+
+
 def objdetect():
     # source_file = browseFiles()
     # RealTime data
+    isVideoCaptureOpen = True
     if keyboard.is_pressed('q'):
         try:
             capture.release()
             lmain.configure(image=no_data_img)
             print("Capture released")
+            return
         except:
             print("Some error has occured")
+            sys.exit(0)
 
     (ret_old, old_frame) = capture.read()
     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
@@ -248,6 +258,84 @@ def drawRectangle(frame, minus_frame):
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
     lmain.after(1, objdetect)
+
+# To perform object detection on an existing video
+
+
+def switchCaptureFromVideo():
+    global capture
+    source_file = browseFiles()
+    # RealTime data
+    capture = VideoCapture(source_file)
+
+
+def objDetectFromVideo():
+    isVideoCaptureOpen = True
+    if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
+        try:
+            isVideoCaptureOpen = False
+            capture.release()
+            lmain.configure(image=no_data_img)
+            print("Capture released")
+        except:
+            print("Some error has occured")
+
+    (ret_old, old_frame) = capture.read()
+    gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+    if(is_blur):
+        gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+    oldBlurMatrix = np.float32(gray_oldframe)
+    accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+
+    ret, frame = capture.read()
+    gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+    if(is_blur):
+        newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+    else:
+        newBlur_frame = gray_frame
+    newBlurMatrix = np.float32(newBlur_frame)
+    minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+    ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+    accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
+
+    # imshow('Input', frame)
+
+    drawRectangleFromVideo(frame, minus_frame)
+
+
+def drawRectangleFromVideo(frame, minus_frame):
+    if(is_blur):
+        minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
+    minus_Matrix = np.float32(minus_frame)
+    if(is_close):
+        for i in range(get_current_value1()):
+            minus_Matrix = dilate(minus_Matrix, kernel_d)
+
+        for i in range(get_current_value2()):
+            minus_Matrix = erode(minus_Matrix, kernel_e)
+
+    minus_Matrix = np.clip(minus_Matrix, 0, 255)
+    minus_Matrix = np.array(minus_Matrix, np.uint8)
+    contours, hierarchy = findContours(
+        minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
+    for c in contours:
+        (x, y, w, h) = boundingRect(c)
+        rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        if(is_draw_ct):
+            drawContours(frame, contours, -1, (0, 255, 255), 1)
+
+    cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+
+    # ____Dilation and Erosion_____
+    cv2image = cv2.dilate(cv2image, kernel_d, iterations=get_current_value1())
+    cv2image = cv2.erode(cv2image, kernel_e, iterations=get_current_value2())
+    # ____Dilation and Erosion_____
+
+    img = Image.fromarray(cv2image)
+    imgtk = ImageTk.PhotoImage(image=img)
+    lmain.imgtk = imgtk
+    lmain.configure(image=imgtk)
+    lmain.after(1, objDetectFromVideo)
 
 
 def deturbulence():
@@ -480,11 +568,13 @@ def endeturbulence():
     cv2.destroyAllWindows()
 
 
-C3 = Button(window, text="Object Detection", font=(
-    "Times New Roman", 12, 'bold'), command=objdetect).place(x=880, y=10)
-C4 = Button(window, text="Turbulence Mitigation", font=(
+C3 = Button(window, text="Object Detection (Real Time)", font=(
+    "Times New Roman", 12, 'bold'), command=lambda: [switchCapture(), objdetect()]).place(x=860, y=10)
+C4 = Button(window, text="Object Detection (Load Video)", font=(
+    "Times New Roman", 12, 'bold'), command=lambda: [switchCaptureFromVideo(), objDetectFromVideo()]).place(x=860, y=120)
+C5 = Button(window, text="Turbulence Mitigation", font=(
     "Times New Roman", 12, 'bold'), command=deturbulence).place(x=1090, y=10)
-C5 = Button(window, text="Enhanced - TM", font=("Times New Roman",
+C6 = Button(window, text="Enhanced - TM", font=("Times New Roman",
                                                 12, 'bold'), command=endeturbulence).place(x=1090, y=60)
 
 # ___________________FOOTER OF THE GUI WINDOW______________________
