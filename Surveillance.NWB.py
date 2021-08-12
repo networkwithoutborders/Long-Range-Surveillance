@@ -18,7 +18,8 @@ from utils import *
 import time
 from skimage.restoration import wiener, richardson_lucy
 from scipy.special import j1
-
+import asyncio
+from multiprocessing import Process
 #_____________________USER-DEFINED FUNCTIONS______________________
 
 kernel_d = np.ones((3,3), np.uint8)
@@ -32,10 +33,16 @@ fac = 2                                 #initializing_integer_variables
 #___________________INITALIZING THE GUI WINDOW______________________
 
 window = Tk()
-window.geometry('1300x480')
+window.geometry('1500x780')
 window.configure(background="grey64");
 window.title("Surveillance System")
 window.resizable(0,0)
+
+#___________________HEADER OF THE GUI WINDOW______________________
+
+hframe=LabelFrame(window,width=1500, height=50,fg="black",bg="aqua").place(x=0,y=0)
+title = Label(hframe, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="aqua").place(x=680, y=2)
+
 
 #_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
 
@@ -71,19 +78,103 @@ slider2.set(15)
 slider2.place(x=1090,y=82)
 value_label2.place(x=1095,y=82)
 
-#_____________________CREATING BUTTONS______________________
-
-title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=520, y=400)
-#label_file_explorer = Label(window, text = "", fg = "blue")
-#label_file_explorer.place(x=20,y=60)
-
 #____________________ADDING FUNCTIONALITES_________________________
+def selectROI(Image, resize_factor):
+    "ROI selection with resizing Image so it will fit in screen"
+    no_row, no_col = Image.shape
+    Im_resized = cv2.resize(Image, (int(no_col/resize_factor), int(no_row/resize_factor)))
+    roi = cv2.selectROI('select ROI', Im_resized.astype(np.uint8))
+    roi = tuple([i*resize_factor for i in roi])
+    return roi
 
-#Label(window).pack(ipadx=0,ipady=0)
-f1 = LabelFrame(window,height=360,width=660,padx=0,pady=0)
-f1.pack()
-L1 = Label(f1,height=360,width=640,padx=0,pady=0,anchor='nw')
-L1.pack(ipadx=0,ipady=0)
+def loadVideo(videopath):
+    ImagesSequence = []
+    cap = cv2.VideoCapture(videopath)
+    while(True):
+        ret, frame = cap.read()
+        if ret == True:
+            frame = cv2.flip(frame,1)
+            ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            cv2.imshow('gray',cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                break
+    cap.release()
+    cv2.destroyAllWindows()
+    return ImagesSequence
+    
+
+
+def MaxSharpnessFusedPatch(patches, patch_half_size):
+    "Using multiprocessing to calculate simultaniously patches' sharpness metric which is defined as Intensity Variance. "
+    no_rows_patch, no_cols_patch = patches[0].shape
+
+    pool = Pool()
+    patchesSharpness = pool.starmap(MeasureSharpness, [(patch, patch_half_size) for patch in patches])
+    pool.close()
+    pool.join()
+
+    MaxSharpnessMeasurementsPatches_indices = np.argmax(patchesSharpness, axis=0)
+    FusedPatch = np.zeros(tuple(map(lambda i, j: i - 2*j, patches[0].shape, patch_half_size)))
+    no_rows_FusedPatch, no_cols_FusedPatch = FusedPatch.shape
+
+    for counter, maxSharpness_index in enumerate(MaxSharpnessMeasurementsPatches_indices):
+        FusedPatch[counter % no_rows_FusedPatch, int(counter / no_rows_FusedPatch)] =\
+            patches[maxSharpness_index][patch_half_size[0] + counter % no_rows_FusedPatch, patch_half_size[1] + int(counter / no_rows_FusedPatch)]
+
+    return FusedPatch
+
+def MeasureSharpness(Image, patchHalfSize):
+    ''' This function calculates the sharpness (salience) measurement of a given image.
+    It divides the image into patches for a given patch's size. Patches calculation order is determined vertically (changing rows).
+    Returns: List of Sharpness Measurement of patches.
+    '''
+
+    # full overlap between adjacent patches.
+    ROI_size = Image.shape
+    patchCenterCoordinates = [(row, col) for row in range(patchHalfSize[0], ROI_size[0] - patchHalfSize[0])
+                              for col in range(patchHalfSize[1], ROI_size[1] - patchHalfSize[1])]
+
+    patches = [Image[(row - patchHalfSize[0]):(row + patchHalfSize[0] + 1),
+               (col - patchHalfSize[1]):(col + patchHalfSize[1] + 1)] for (row, col) in patchCenterCoordinates]
+
+    # Remove noise by blurring with a Gaussian filter
+    #Gaussian_of_patches = [cv2.GaussianBlur(patch, (3, 3), 0) for patch in patches]
+
+    # #Salience measurement : max energy of local Laplacian.
+    # Laplacian_of_patches = [cv2.Laplacian(patch, ddepth=cv2.CV_16S, ksize=3) for patch in patches]
+    # Energy_of_Laplacians = [sum(sum(np.square(patch.astype(np.int64)))) for patch in Laplacian_of_patches]
+
+    # Sharpness measurement: Intensity variance
+    varianceOfPatches = [IntensityVariance(patch) for patch in patches]
+
+    # Found to be slower using pool!
+    # pool = Pool(2)
+    # varianceOfPatches = pool.map(IntensityVariance, patches)
+    # pool.close()
+    # pool.join()
+
+    sharpnessValues = varianceOfPatches
+    return sharpnessValues
+
+def IntensityVariance(patch):
+    " Calculate Variance of patches' intensity."
+    Image_size = patch.shape
+    VectorizedImage = patch.reshape(Image_size[0]*Image_size[1], 1) #Image to vector
+    Image_mean = np.mean(VectorizedImage)
+    Variance = 1/(Image_size[0]*Image_size[1] - 1) * sum((VectorizedImage - Image_mean)**2)
+
+    return int(Variance)
+
+
+L1 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
+L1.place(x=250,y=180)
+
+L2 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
+L2.place(x=620,y=180)
+
+L3 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
+L3.place(x=1000,y=180)
+
 cap = cv2.VideoCapture(0)
 
 def drawRectangle(frame, minus_frame):
@@ -133,7 +224,7 @@ def objdetect():
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             frame = cv2.flip(frame,1)
             frame = ImageTk.PhotoImage(Image.fromarray(frame))
-            L1['image'] = frame
+            L3['image'] = frame
             window.update()
     
     
@@ -155,10 +246,10 @@ def deturbulence():
     readVideo = 1  
     ReferenceInitializationOpt = 2 # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
 
-    ImagesSequence = cap.read()
+    ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
-
+    
     roi_plate_250 = (1092, 830, 564, 228)
     roi_test = (310, 279, 200, 128)
     if readVideo:
@@ -228,13 +319,14 @@ def deturbulence():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
-        cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
-        if cv2.waitKey(20) & 0xFF == ord('q'):
+     #   cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        L1['image'] = frame1
+        window.update()
+        if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         i+=1
-        objdetect()
-        endeturbulence()
-    cv2.destroyAllWindows()  
+    #cv2.destroyAllWindows()  '''
 
 
 def endeturbulence():
@@ -253,7 +345,7 @@ def endeturbulence():
     readVideo = 1
     ReferenceInitializationOpt = 2
     
-    ImagesSequence = cv2.VideoCapture(0)
+    ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi_plate_250 = (1092, 830, 564, 228)
@@ -342,22 +434,24 @@ def endeturbulence():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
-        cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        #cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        frame2 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        L2['image'] = frame2
+        window.update()
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         i+=1
     cv2.destroyAllWindows()
 
-#deturbulence()
-#endeturbulence()
+
 C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'), command=objdetect).place(x=20,y=60)
 C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=20,y=100)
 C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=20,y=140)
 
 #___________________FOOTER OF THE GUI WINDOW______________________
 
-#frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=430)
-#foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=140,y=445)
+frame=LabelFrame(window,width=1500, height=50,fg="black",bg="aqua").place(x=0,y=720)
+foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=2,y=730)
 window.mainloop()
  
 
