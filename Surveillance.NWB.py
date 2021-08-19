@@ -87,6 +87,7 @@ def selectROI(Image, resize_factor):
     roi = tuple([i*resize_factor for i in roi])
     return roi
 
+
 def loadVideo(videopath):
     ImagesSequence = []
     cap = cv2.VideoCapture(videopath)
@@ -98,6 +99,7 @@ def loadVideo(videopath):
             cv2.imshow('gray',cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
+               
     cap.release()
     cv2.destroyAllWindows()
     return ImagesSequence
@@ -318,10 +320,13 @@ def deturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
-        cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
-     #   cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
-        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        #cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
+        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_arr[i].astype(np.uint8)))
         L1['image'] = frame1
+        window.update()
+        #cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        frame2 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        L2['image'] = frame2
         window.update()
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
@@ -433,7 +438,10 @@ def endeturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
-        cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
+        #cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
+        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_arr[i].astype(np.uint8)))
+        L1['image'] = frame1
+        window.update()
         #cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
         frame2 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
         L2['image'] = frame2
