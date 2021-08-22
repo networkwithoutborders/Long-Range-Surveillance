@@ -2,7 +2,7 @@
 
 import tkinter
 from tkinter import*
-from tkinter import ttk, Button
+from tkinter import ttk
 from tkinter import filedialog
 from _cffi_backend import callback
 from PIL import ImageTk, Image
@@ -18,8 +18,8 @@ from utils import *
 import time
 from skimage.restoration import wiener, richardson_lucy
 from scipy.special import j1
-import asyncio
-from multiprocessing import Process
+
+
 #_____________________USER-DEFINED FUNCTIONS______________________
 
 kernel_d = np.ones((3,3), np.uint8)
@@ -32,17 +32,12 @@ fac = 2                                 #initializing_integer_variables
 
 #___________________INITALIZING THE GUI WINDOW______________________
 
-window = Tk()
-window.geometry('1500x780')
+   
+window=Tk()
 window.configure(background="grey64");
 window.title("Surveillance System")
-window.resizable(0,0)
-
-#___________________HEADER OF THE GUI WINDOW______________________
-
-hframe=LabelFrame(window,width=1500, height=50,fg="black",bg="aqua").place(x=0,y=0)
-title = Label(hframe, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="aqua").place(x=680, y=2)
-
+window.resizable(height = None, width = None)
+window.geometry('1300x480')
 
 #_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
 
@@ -57,12 +52,12 @@ def get_current_value1():
 def slider_changed1(event):
     value_label1.configure(text=get_current_value1())
 
-slider_label1 = Label(window,text='Dilation',font=("Times New Roman",12),fg="black",bg="grey64").place(x=1032,y=52)
+slider_label1 = Label(window,text='Dilation',font=("Times New Roman",12),fg="black",bg="grey64").place(x=832,y=52)
 value_label1 = ttk.Label(window, text=get_current_value1())
 slider1 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_changed1, variable=current_value1)
 slider1.set(15)
-slider1.place(x=1090,y=50)
-value_label1.place(x=1095,y=52)
+slider1.place(x=890,y=50)
+value_label1.place(x=995,y=52)
 
 
 def get_current_value2():
@@ -71,22 +66,76 @@ def get_current_value2():
 def slider_changed2(event2):
     value_label2.configure(text=get_current_value2())
 
-slider_label2 = Label(window,text='Erosion',font=("Times New Roman",12),fg="black",bg="grey64").place(x=1032,y=82)
+slider_label2 = Label(window,text='Erosion',font=("Times New Roman",12),fg="black",bg="grey64").place(x=832,y=82)
 value_label2 = ttk.Label(window, text=get_current_value2())
 slider2 = ttk.Scale(window, from_=5,to=25, orient='horizontal', command=slider_changed2, variable=current_value2)
 slider2.set(15)
-slider2.place(x=1090,y=82)
-value_label2.place(x=1095,y=82)
+slider2.place(x=890,y=82)
+value_label2.place(x=995,y=82)
+
+
+#_____________________HEADER______________________
+
+title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
+label_file_explorer = Label(window, text = "", fg = "blue")
+label_file_explorer.place(x=20,y=60)
 
 #____________________ADDING FUNCTIONALITES_________________________
-def selectROI(Image, resize_factor):
-    "ROI selection with resizing Image so it will fit in screen"
-    no_row, no_col = Image.shape
-    Im_resized = cv2.resize(Image, (int(no_col/resize_factor), int(no_row/resize_factor)))
-    roi = cv2.selectROI('select ROI', Im_resized.astype(np.uint8))
-    roi = tuple([i*resize_factor for i in roi])
-    return roi
 
+'''def browseFiles():
+    global source_file
+    source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
+    label_file_explorer.configure(text="File: "+source_file)
+    return source_file'''
+
+
+
+
+input_frame = LabelFrame(window.geometry('500x700'),text="Input",font=("Times New Roman",18, 'bold'),bg="grey64")
+input_frame.pack(side = 'left', expand='yes')
+
+L1 = Label(input_frame,bg="grey64")
+L1.pack()
+
+output_frame = LabelFrame(window.geometry('500x700'),text="Output",font=("Times New Roman",18, 'bold'),bg="grey64")
+output_frame.pack(side = 'right', expand='yes')
+
+L2 = Label(output_frame,bg="grey64")
+L2.pack()
+
+cap = cv2.VideoCapture(0)
+
+def objdetect():
+    while(1):
+        (ret_old, old_frame) = cap.read()
+        gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
+        if(is_blur):
+            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
+        oldBlurMatrix = np.float32(gray_oldframe)
+        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+        while True:
+            ret, frame = cap.read()
+            inpframe = ImageTk.PhotoImage(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
+            L1['image'] = inpframe
+            frame = cv2.flip(frame,1)
+            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+            
+            if(is_blur):
+                newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
+            else:
+                newBlur_frame = gray_frame
+        
+            newBlurMatrix = np.float32(newBlur_frame)
+            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
+            accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
+    
+            drawRectangle(frame, minus_frame)
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            frame = ImageTk.PhotoImage(Image.fromarray(frame))
+            L2['image'] = frame
+            window.update()
+            
 
 def loadVideo(videopath):
     ImagesSequence = []
@@ -102,82 +151,7 @@ def loadVideo(videopath):
                
     cap.release()
     cv2.destroyAllWindows()
-    return ImagesSequence
-    
-
-
-def MaxSharpnessFusedPatch(patches, patch_half_size):
-    "Using multiprocessing to calculate simultaniously patches' sharpness metric which is defined as Intensity Variance. "
-    no_rows_patch, no_cols_patch = patches[0].shape
-
-    pool = Pool()
-    patchesSharpness = pool.starmap(MeasureSharpness, [(patch, patch_half_size) for patch in patches])
-    pool.close()
-    pool.join()
-
-    MaxSharpnessMeasurementsPatches_indices = np.argmax(patchesSharpness, axis=0)
-    FusedPatch = np.zeros(tuple(map(lambda i, j: i - 2*j, patches[0].shape, patch_half_size)))
-    no_rows_FusedPatch, no_cols_FusedPatch = FusedPatch.shape
-
-    for counter, maxSharpness_index in enumerate(MaxSharpnessMeasurementsPatches_indices):
-        FusedPatch[counter % no_rows_FusedPatch, int(counter / no_rows_FusedPatch)] =\
-            patches[maxSharpness_index][patch_half_size[0] + counter % no_rows_FusedPatch, patch_half_size[1] + int(counter / no_rows_FusedPatch)]
-
-    return FusedPatch
-
-def MeasureSharpness(Image, patchHalfSize):
-    ''' This function calculates the sharpness (salience) measurement of a given image.
-    It divides the image into patches for a given patch's size. Patches calculation order is determined vertically (changing rows).
-    Returns: List of Sharpness Measurement of patches.
-    '''
-
-    # full overlap between adjacent patches.
-    ROI_size = Image.shape
-    patchCenterCoordinates = [(row, col) for row in range(patchHalfSize[0], ROI_size[0] - patchHalfSize[0])
-                              for col in range(patchHalfSize[1], ROI_size[1] - patchHalfSize[1])]
-
-    patches = [Image[(row - patchHalfSize[0]):(row + patchHalfSize[0] + 1),
-               (col - patchHalfSize[1]):(col + patchHalfSize[1] + 1)] for (row, col) in patchCenterCoordinates]
-
-    # Remove noise by blurring with a Gaussian filter
-    #Gaussian_of_patches = [cv2.GaussianBlur(patch, (3, 3), 0) for patch in patches]
-
-    # #Salience measurement : max energy of local Laplacian.
-    # Laplacian_of_patches = [cv2.Laplacian(patch, ddepth=cv2.CV_16S, ksize=3) for patch in patches]
-    # Energy_of_Laplacians = [sum(sum(np.square(patch.astype(np.int64)))) for patch in Laplacian_of_patches]
-
-    # Sharpness measurement: Intensity variance
-    varianceOfPatches = [IntensityVariance(patch) for patch in patches]
-
-    # Found to be slower using pool!
-    # pool = Pool(2)
-    # varianceOfPatches = pool.map(IntensityVariance, patches)
-    # pool.close()
-    # pool.join()
-
-    sharpnessValues = varianceOfPatches
-    return sharpnessValues
-
-def IntensityVariance(patch):
-    " Calculate Variance of patches' intensity."
-    Image_size = patch.shape
-    VectorizedImage = patch.reshape(Image_size[0]*Image_size[1], 1) #Image to vector
-    Image_mean = np.mean(VectorizedImage)
-    Variance = 1/(Image_size[0]*Image_size[1] - 1) * sum((VectorizedImage - Image_mean)**2)
-
-    return int(Variance)
-
-
-L1 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
-L1.place(x=250,y=180)
-
-L2 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
-L2.place(x=620,y=180)
-
-L3 = Label(window,height=360,width=360,bg="grey64",padx=0,pady=0)
-L3.place(x=1000,y=180)
-
-cap = cv2.VideoCapture(0)
+    return ImagesSequence   
 
 def drawRectangle(frame, minus_frame):
 	if(is_blur):
@@ -198,39 +172,7 @@ def drawRectangle(frame, minus_frame):
 		rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		if( is_draw_ct ):
 			drawContours(frame, contours, -1, (0, 255, 255), 2)
-
-
-
-def objdetect():
-    while(1):
-        (ret_old, old_frame) = cap.read()
-        gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-        if(is_blur):
-            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-        oldBlurMatrix = np.float32(gray_oldframe)
-        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-        while True:
-            ret, frame = cap.read()
-            gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-            if(is_blur):
-                newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-            else:
-                newBlur_frame = gray_frame
-        
-            newBlurMatrix = np.float32(newBlur_frame)
-            minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-            ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-            accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
-    
-            drawRectangle(frame, minus_frame)
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-            frame = cv2.flip(frame,1)
-            frame = ImageTk.PhotoImage(Image.fromarray(frame))
-            L3['image'] = frame
-            window.update()
-    
-    
-
+	#imshow('Object_Detection', frame)
 
 def deturbulence():
     dataType = np.float32
@@ -450,16 +392,14 @@ def endeturbulence():
             break
         i+=1
     cv2.destroyAllWindows()
+ 
+#_____________________CREATING BUTTONS______________________
+C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
+C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=1090,y=10)
+C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=1090,y=60)
 
 
-C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'), command=objdetect).place(x=20,y=60)
-C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=20,y=100)
-C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=20,y=140)
-
-#___________________FOOTER OF THE GUI WINDOW______________________
-
-frame=LabelFrame(window,width=1500, height=50,fg="black",bg="aqua").place(x=0,y=720)
-foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=2,y=730)
+window.state('zoomed')
 window.mainloop()
  
 
