@@ -13,11 +13,8 @@ A GUI model to aid long range surveillance.  With our literature, we understand 
 
 ## Help Required
 
-1. Need to modify ```deturbulence()``` and ```endeturbulence()``` for webcamera / live input feed
-2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
-3. Need to pass value of slider dynamically / automatically based on ground-truth to ```objdetect()```
-4. Need to fit the  ```imshow('result', frame)``` inside the GUI (instead of pop up)
-5. Modify the model to utilise GPU resources (if available) to reduce time complexity
+1. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
+2. Modify the model to utilise GPU resources (if available) to reduce time complexity
 
 ## Build Status
 
