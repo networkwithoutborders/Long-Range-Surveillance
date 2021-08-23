@@ -115,9 +115,9 @@ def objdetect():
         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
         while True:
             ret, frame = cap.read()
+            frame = cv2.flip(frame,1)
             inpframe = ImageTk.PhotoImage(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
             L1['image'] = inpframe
-            frame = cv2.flip(frame,1)
             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
             
             if(is_blur):
