@@ -6,4 +6,5 @@ scikit-image
 tensorflow
 imgaug
 matplotlib
-labelme2coco
+imutils
+cffi
