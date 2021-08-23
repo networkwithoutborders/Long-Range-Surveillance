@@ -36,7 +36,7 @@ fac = 2                                 #initializing_integer_variables
 window=Tk()
 window.configure(background="grey64");
 window.title("Surveillance System")
-window.resizable(0,0)
+window.resizable(height = None, width = None)
 window.geometry('1300x480')
 
 #_______________SETTING VARIBALES TO CHECK STATE OF BUTTON (CHECKED OR UNCHECKED)______________________
@@ -74,7 +74,7 @@ slider2.place(x=890,y=82)
 value_label2.place(x=995,y=82)
 
 
-#_____________________CREATING BUTTONS______________________
+#_____________________HEADER______________________
 
 title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
 label_file_explorer = Label(window, text = "", fg = "blue")
@@ -82,41 +82,77 @@ label_file_explorer.place(x=20,y=60)
 
 #____________________ADDING FUNCTIONALITES_________________________
 
-def browseFiles():
+'''def browseFiles():
     global source_file
     source_file = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes =[('All Files', '.*')],parent=window)
     label_file_explorer.configure(text="File: "+source_file)
-    return source_file
+    return source_file'''
+
+
+
+
+input_frame = LabelFrame(window.geometry('500x700'),text="Input",font=("Times New Roman",18, 'bold'),bg="grey64")
+input_frame.pack(side = 'left', expand='yes')
+
+L1 = Label(input_frame,bg="grey64")
+L1.pack()
+
+output_frame = LabelFrame(window.geometry('500x700'),text="Output",font=("Times New Roman",18, 'bold'),bg="grey64")
+output_frame.pack(side = 'right', expand='yes')
+
+L2 = Label(output_frame,bg="grey64")
+L2.pack()
+
+cap = cv2.VideoCapture(0)
 
 def objdetect():
-    source_file=browseFiles()
-    capture = VideoCapture(source_file)
     while(1):
-        (ret_old, old_frame) = capture.read()
+        (ret_old, old_frame) = cap.read()
         gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
         if(is_blur):
             gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
         oldBlurMatrix = np.float32(gray_oldframe)
         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-        while(True):
-            ret, frame = capture.read()
+        while True:
+            ret, frame = cap.read()
+            inpframe = ImageTk.PhotoImage(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
+            L1['image'] = inpframe
+            frame = cv2.flip(frame,1)
             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
+            
             if(is_blur):
                 newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
             else:
                 newBlur_frame = gray_frame
+        
             newBlurMatrix = np.float32(newBlur_frame)
             minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
             ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
             accumulateWeighted(newBlurMatrix,oldBlurMatrix,0.02)
-            imshow('Input', frame)
+    
             drawRectangle(frame, minus_frame)
-            if cv2.waitKey(20) & 0xFF == ord('q'):
-                break
-        capture.release() 
-        cv2.destroyAllWindows()
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            frame = ImageTk.PhotoImage(Image.fromarray(frame))
+            L2['image'] = frame
+            window.update()
+            
 
-   
+def loadVideo(videopath):
+    ImagesSequence = []
+    cap = cv2.VideoCapture(videopath)
+    while(True):
+        ret, frame = cap.read()
+        if ret == True:
+            frame = cv2.flip(frame,1)
+            ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            cv2.imshow('gray',cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                break
+               
+    cap.release()
+    cv2.destroyAllWindows()
+    return ImagesSequence   
+
 def drawRectangle(frame, minus_frame):
 	if(is_blur):
 		minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
@@ -136,10 +172,9 @@ def drawRectangle(frame, minus_frame):
 		rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		if( is_draw_ct ):
 			drawContours(frame, contours, -1, (0, 255, 255), 2)
-	imshow('Object_Detection', frame)
+	#imshow('Object_Detection', frame)
 
 def deturbulence():
-    source_file=browseFiles()
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -155,11 +190,10 @@ def deturbulence():
     readVideo = 1  
     ReferenceInitializationOpt = 2 # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
 
-    video_path = source_file
-    ImagesSequence = loadVideo(video_path)
+    ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
-
+    
     roi_plate_250 = (1092, 830, 564, 228)
     roi_test = (310, 279, 200, 128)
     if readVideo:
@@ -228,16 +262,21 @@ def deturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
-        cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
-        cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
-        if cv2.waitKey(20) & 0xFF == ord('q'):
+        #cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
+        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_arr[i].astype(np.uint8)))
+        L1['image'] = frame1
+        window.update()
+        #cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        frame2 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        L2['image'] = frame2
+        window.update()
+        if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         i+=1
-    cv2.destroyAllWindows()  
+    #cv2.destroyAllWindows()  '''
 
 
 def endeturbulence():
-    source_file=browseFiles()
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -252,8 +291,8 @@ def endeturbulence():
     fno = m_focal_length / m_aperture
     readVideo = 1
     ReferenceInitializationOpt = 2
-    video_path = source_file
-    ImagesSequence = loadVideo(video_path)
+    
+    ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi_plate_250 = (1092, 830, 564, 228)
@@ -341,22 +380,26 @@ def endeturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
-        cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
-        cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
-        if cv2.waitKey(20) & 0xFF == ord('q'):
+        #cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
+        frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_arr[i].astype(np.uint8)))
+        L1['image'] = frame1
+        window.update()
+        #cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
+        frame2 = ImageTk.PhotoImage(Image.fromarray(ROI_enhanced_arr[i].astype(np.uint8)))
+        L2['image'] = frame2
+        window.update()
+        if cv2.waitKey(25) & 0xFF == ord('q'):
             break
         i+=1
-    cv2.destroyAllWindows() 
-    
-    
+    cv2.destroyAllWindows()
+ 
+#_____________________CREATING BUTTONS______________________
 C3=Button(window,text = "Object Detection",font=("Times New Roman",12, 'bold'),command=objdetect).place(x=880,y=10)
 C4=Button(window,text="Turbulence Mitigation",font=("Times New Roman",12, 'bold'),command=deturbulence).place(x=1090,y=10)
 C5=Button(window,text="Enhanced - TM",font=("Times New Roman",12, 'bold'),command=endeturbulence).place(x=1090,y=60)
 
-#___________________FOOTER OF THE GUI WINDOW______________________
 
-frame=LabelFrame(window,width=1300, height=50,fg="black",bg="aqua").place(x=0,y=430)
-foot=Label(frame,text = "Developed using Python 3.8",font=("Times New Roman",11),fg="black",bg="aqua").place(x=840,y=445)
+window.state('zoomed')
 window.mainloop()
  
 
