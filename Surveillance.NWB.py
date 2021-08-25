@@ -77,8 +77,8 @@ value_label2.place(x=995,y=82)
 #_____________________HEADER______________________
 
 title = Label(window, text = "Surveillance System",font=("Times New Roman",18, 'bold'),fg="black",bg="grey64").place(x=495, y=10)
-label_file_explorer = Label(window, text = "", fg = "blue")
-label_file_explorer.place(x=20,y=60)
+#label_file_explorer = Label(window, text = "", fg = "blue")
+#label_file_explorer.place(x=20,y=60)
 
 #____________________ADDING FUNCTIONALITES_________________________
 
@@ -115,9 +115,9 @@ def objdetect():
         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
         while True:
             ret, frame = cap.read()
+            frame = cv2.flip(frame,1)
             inpframe = ImageTk.PhotoImage(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
             L1['image'] = inpframe
-            frame = cv2.flip(frame,1)
             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
             
             if(is_blur):
