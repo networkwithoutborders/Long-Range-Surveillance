@@ -106,7 +106,8 @@ L2.pack()
 cap = cv2.VideoCapture(0)
 
 def objdetect():
-    while(1):
+    flag=True
+    while(flag):
         (ret_old, old_frame) = cap.read()
         gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
         if(is_blur):
@@ -118,6 +119,7 @@ def objdetect():
             frame = cv2.flip(frame,1)
             inpframe = ImageTk.PhotoImage(Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
             L1['image'] = inpframe
+            
             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
             
             if(is_blur):
@@ -135,7 +137,14 @@ def objdetect():
             frame = ImageTk.PhotoImage(Image.fromarray(frame))
             L2['image'] = frame
             window.update()
-            
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                break
+        cap.release(cap)
+
+def stop(event):
+    cap.release()
+
+window.bind('<q>',stop)
 
 def loadVideo(videopath):
     ImagesSequence = []
@@ -262,6 +271,7 @@ def deturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
+        
         #cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
         frame1 = ImageTk.PhotoImage(Image.fromarray(ROI_arr[i].astype(np.uint8)))
         L1['image'] = frame1
