@@ -195,7 +195,17 @@ def toggleCapture():
 
 
 def objdetect():
-
+    isVideoCaptureOpen = True
+    if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
+        try:
+            isVideoCaptureOpen = False
+            capture.release()
+            L1.config(image='')
+            L2.config(image='')
+            print("Capture released")
+            return
+        except:
+            print("Some error has occured")
     (ret_old, old_frame) = capture.read()
     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
     if(is_blur):
