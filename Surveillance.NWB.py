@@ -61,10 +61,10 @@ def slider_changed1(event):
 slider_label1 = Label(window, text='Dilation', font=(
     "Times New Roman", 12), fg="black", bg="grey64").place(x=832, y=52)
 value_label1 = ttk.Label(window, text=get_current_value1())
-slider1 = ttk.Scale(window, from_=0, to=25, orient='horizontal',
+slider1 = ttk.Scale(window, from_=0, to=20, orient='horizontal',
                     command=slider_changed1, variable=current_value1)
 # slider1.set(15)
-slider1.set(0)
+slider1.set(13)
 slider1.place(x=890, y=50)
 value_label1.place(x=995, y=52)
 
@@ -83,10 +83,10 @@ def slider_changed2(event2):
 slider_label2 = Label(window, text='Erosion', font=(
     "Times New Roman", 12), fg="black", bg="grey64").place(x=832, y=82)
 value_label2 = ttk.Label(window, text=get_current_value2())
-slider2 = ttk.Scale(window, from_=0, to=25, orient='horizontal',
+slider2 = ttk.Scale(window, from_=0, to=20, orient='horizontal',
                     command=slider_changed2, variable=current_value2)
 # slider2.set(15)
-slider2.set(0)
+slider2.set(5)
 slider2.place(x=890, y=82)
 value_label2.place(x=995, y=82)
 
@@ -189,6 +189,23 @@ L2.pack()
 
 # ___________________New Object detection code___________________
 
+def loadVideo(videopath):
+    ImagesSequence = []
+    capture = cv2.VideoCapture(videopath)
+    while(True):
+        ret, frame = capture.read()
+        if ret == True:
+            frame = cv2.flip(frame, 1)
+            ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                break
+
+    capture.release()
+    cv2.destroyAllWindows()
+    return ImagesSequence
+
+
 def toggleCapture():
     global capture
     capture = VideoCapture(0)
@@ -230,23 +247,6 @@ def objdetect():
     accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
     drawRectangle(inpframe, frame, minus_frame)
-
-
-def loadVideo(videopath):
-    ImagesSequence = []
-    capture = cv2.VideoCapture(videopath)
-    while(True):
-        ret, frame = capture.read()
-        if ret == True:
-            frame = cv2.flip(frame, 1)
-            ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-            cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                break
-
-    capture.release()
-    cv2.destroyAllWindows()
-    return ImagesSequence
 
 
 def drawRectangle(inp_frame, frame, minus_frame):
@@ -304,8 +304,9 @@ def deturbulence():
 
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
-    roi = selectROI(ImagesSequence[0], resize_factor=2)
-
+    # roi = selectROI(ImagesSequence[0], resize_factor=2)
+    roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
+    print(f"THIS IS ROI: {roi}")
     roi_plate_250 = (1092, 830, 564, 228)
     roi_test = (310, 279, 200, 128)
     if readVideo:
@@ -368,6 +369,7 @@ def deturbulence():
         Y = X
         XX, YY = np.meshgrid(X, Y)
         AiryDisk = np.zeros(XX.shape)
+        print("SHAPE: ", AiryDisk.shape)
         q = np.sqrt((XX-np.mean(Y)) ** 2 + (YY-np.mean(Y)) ** 2)
         beta = k * m_aperture_diameter * q / 2 / L
         AiryDisk = Io * (2 * j1(beta) / beta) ** 2
@@ -380,9 +382,19 @@ def deturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
-        cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
-        cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
+        # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
+        # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
+        inp_roi = ImageTk.PhotoImage(
+            Image.fromarray(ROI_arr[i].astype(np.uint8)))
+        out_roi = ImageTk.PhotoImage(Image.fromarray(
+            ROI_enhanced_arr[i].astype(np.uint8)))
+        L1['image'] = inp_roi
+        L2['image'] = out_roi
+        window.update()
+
         if cv2.waitKey(20) & 0xFF == ord('q'):
+            L1.config(image='')
+            L2.config(image='')
             break
         i += 1
     cv2.destroyAllWindows()
