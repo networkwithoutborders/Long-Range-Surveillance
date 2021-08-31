@@ -279,8 +279,8 @@ def toggleCapture():
 def write_video(frames_list,fps,type,detur = False):
     if detur:
         Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR) for Frame in frames_list]
-    displayVarPath.set(str(f'{path}/{type}.avi'))
-    out = cv2.VideoWriter(f'{path}/{type}.avi',cv2.VideoWriter_fourcc(*'DIVX'), fps, (frames_list[0].shape[1],
+    displayVarPath.set(str(f'{path}/{type}.mp4'))
+    out = cv2.VideoWriter(f'{path}/{type}.mp4',cv2.VideoWriter_fourcc(*'MP4V'), fps, (frames_list[0].shape[1],
                                                                               frames_list[0].shape[0]))
     for i in range(len(frames_list)):
         if detur:
