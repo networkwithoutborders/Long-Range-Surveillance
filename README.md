@@ -9,12 +9,12 @@ A GUI model to aid long range surveillance.  With our literature, we understand 
 ## Work under Progress
 
 1. Enabling IP Camera in-built modules for better monitoring and control
-2. Automatic detection of the connected surveillance devices to be enabled as a list
+2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
 
 ## Help Required
 
-1. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
-2. Modify the model to utilise GPU resources (if available) to reduce time complexity
+1. Automatic detection of the connected surveillance devices to be enabled as a list
+2. Modify the code to utilise GPU resources (if available) to reduce time complexity
 
 ## Build Status
 
