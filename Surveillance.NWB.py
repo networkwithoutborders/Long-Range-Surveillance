@@ -10,7 +10,6 @@ from PIL import ImageTk, Image
 import cv2
 from cv2 import *
 import numpy as np
-import os
 import sys
 import time
 import argparse
@@ -33,7 +32,6 @@ is_close = True  # initializing_boolean_variables
 is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
 isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
-path = os.getcwd() 
 
 
 # ___________________INITALIZING THE GUI WINDOW______________________
@@ -53,8 +51,6 @@ current_value2 = IntVar()
 # _______________________Global Variables__________________________
 
 capture = VideoCapture(0)
-frame_width = int(capture.get(3))
-frame_height = int(capture.get(4))
 fps = 0
 fat = 0
 
@@ -146,16 +142,6 @@ sample_text_fps.place(x=40, y=85)
 text_fps = Label(window, bg='grey64', textvariable=displayVar,
                  font=("Times New Roman", 12, 'bold'))
 text_fps.place(x=75, y=85)
-
-displayVarPath = StringVar()
-sample_text_path = Label(window, bg='grey64', text="Path To Output: ",
-                        font=("Helvetica", 11))
-sample_text_path.place(x=40, y= 145)
-
-text_path=Label(window, bg='grey64', textvariable=displayVarPath,
-                 font=("Helvetica", 11))
-text_path.place(x=130,y=145)
-
 
 displayVarFAT = StringVar()
 sample_text_fat = Label(window, bg='grey64', text="FAT: ",
@@ -310,7 +296,6 @@ def objdetect():
 
 
 def drawRectangle(inp_frame, frame, minus_frame):
-    out = cv2.VideoWriter(f'{path}/output_objectDetect.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
     minus_Matrix = np.float32(minus_frame)
@@ -332,8 +317,6 @@ def drawRectangle(inp_frame, frame, minus_frame):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
-    displayVarPath.set(str(f'{path}/output_objectDetect.avi'))
-    out.write(out_frame)
     L1.imgtk = inp_frame
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
@@ -361,7 +344,6 @@ def deturbulence():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
-    out = cv2.VideoWriter(f'{path}/output_deturbulence.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -442,8 +424,6 @@ def deturbulence():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        displayVarPath.set(str(f'{path}/output_deturbulence.avi'))
-        out.write(ROI_enhanced_arr[i].astype(np.uint8))
         # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
         # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
         try:
@@ -457,7 +437,6 @@ def deturbulence():
             return
         L1['image'] = inp_roi
         L2['image'] = out_roi
-       
         window.update()
 
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -466,7 +445,6 @@ def deturbulence():
             break
         i += 1
     cv2.destroyAllWindows()
-   
 
 
 def endeturbulence():
@@ -625,7 +603,6 @@ def deturbWithObjDetec():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
-    out = cv2.VideoWriter(f'{path}/outputCombined.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -707,7 +684,6 @@ def deturbWithObjDetec():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        displayVarPath.set(str(f'{path}/outputCombined.avi'))
         # print("LEN OF ROI ARR: ", len(ROI_arr))
         # print("ith frame: ", i)
         # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
@@ -763,7 +739,6 @@ def deturbWithObjDetec():
                 drawContours(frame, contours, -1, (0, 255, 255), 2)
 
         frame = cv2.flip(frame, 1)
-        out.write(frame)
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
         L2['image'] = out_frame
