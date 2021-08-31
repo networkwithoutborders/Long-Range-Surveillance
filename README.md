@@ -55,8 +55,7 @@ The following tools were utilized in the building of this code.
 
 <br>
 
->  Pro Tip
->     Press 'q' to release the connected suveillance device from capturing input for the selected module / feature
+>  Pro Tip: Press 'q' to release the connected suveillance device from capturing input for the selected module / feature
 
 
 
