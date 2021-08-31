@@ -58,6 +58,7 @@ frame_height = 0
 ROI_enhanced_arr = []
 Combined_frames = []
 object_frames = []
+iterFPS =0
 fps = 0
 fat = 0
 
@@ -291,19 +292,23 @@ def write_video(frames_list,fps,type,detur = False):
 
 
 def objdetect():
+    global iterFPS
     isVideoCaptureOpen = True
+    i = 0
     if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
         try:
             isVideoCaptureOpen = False
             capture.release()
             L1.config(image='')
             L2.config(image='')
-            write_video(object_frames,10,'object_detect')
+            write_video(object_frames, 10, 'object_detect')
             print("Capture released")
             return
         except:
             print("Some error has occured")
+    start = time.time()
     (ret_old, old_frame) = capture.read()
+    iterFPS += 1
     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
     if(is_blur):
         gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
@@ -313,9 +318,7 @@ def objdetect():
     frame = cv2.flip(frame, 1)
     inpframe = ImageTk.PhotoImage(
         Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
-
     gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-
     if(is_blur):
         newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
     else:
@@ -326,11 +329,10 @@ def objdetect():
     ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
     accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
-    drawRectangle(inpframe, frame, minus_frame)
+    drawRectangle(inpframe, frame, minus_frame, start, iterFPS)
 
 
-
-def drawRectangle(inp_frame, frame, minus_frame):
+def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
     global object_frames
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
@@ -351,6 +353,7 @@ def drawRectangle(inp_frame, frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
+    end = time.time()
     object_frames.append(frame)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
@@ -358,6 +361,9 @@ def drawRectangle(inp_frame, frame, minus_frame):
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
     L2.configure(image=out_frame)
+    fps = iterFPS/(end-start_time)
+    # displayVar.set(str(int(np.random.randint(18, 23))))
+    displayVar.set(str(int(fps)))
     L2.after(1, objdetect)
 
 
