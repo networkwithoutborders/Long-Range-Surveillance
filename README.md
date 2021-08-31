@@ -56,8 +56,7 @@ The following tools were utilized in the building of this code.
 <br>
 
 >  Pro Tip
-> 1. Press 'q' to release the connected suveillance device from capturing input for the selected module / feature
-> 2. Press 'Esc' to close the GUI
+>     Press 'q' to release the connected suveillance device from capturing input for the selected module / feature
 
 
 
