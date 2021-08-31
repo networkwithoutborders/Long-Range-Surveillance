@@ -53,8 +53,10 @@ current_value2 = IntVar()
 # _______________________Global Variables__________________________
 
 capture = VideoCapture(0)
-frame_width = int(capture.get(3))
-frame_height = int(capture.get(4))
+frame_width = 0
+frame_height = 0
+ROI_enhanced_arr = []
+Combined_frames = []
 fps = 0
 fat = 0
 
@@ -243,10 +245,13 @@ text_fat.place(x=75, y=115)
 
 
 def loadVideo(videopath):
+    global frame_width , frame_height
     ImagesSequence = []
     i = 0
     start = time.time()
     capture = cv2.VideoCapture(videopath)
+    frame_width = int(capture.get(3))
+    frame_height = int(capture.get(4))
     while(True):
         ret, frame = capture.read()
         i += 1
@@ -256,7 +261,6 @@ def loadVideo(videopath):
             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             fps = i/(end-start)
-            print("FPS: ", fps)
             displayVar.set(str(int(fps)))
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
@@ -271,6 +275,20 @@ def toggleCapture():
     capture = VideoCapture(0)
 
 
+def write_video(frames_list,fps,type,detur = False):
+    if detur:
+        Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR) for Frame in frames_list]
+    displayVarPath.set(str(f'{path}/{type}.avi'))
+    out = cv2.VideoWriter(f'{path}/{type}.avi',cv2.VideoWriter_fourcc(*'DIVX'), fps, (frames_list[0].shape[1],
+                                                                              frames_list[0].shape[0]))
+    for i in range(len(frames_list)):
+        if detur:
+            out.write(Frames_BGR[i].astype(np.uint8))
+        else:
+            out.write(frames_list[i])
+    out.release()
+
+
 def objdetect():
     isVideoCaptureOpen = True
     if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
@@ -279,6 +297,7 @@ def objdetect():
             capture.release()
             L1.config(image='')
             L2.config(image='')
+            #write_video(object_frames,10,'object_detect')
             print("Capture released")
             return
         except:
@@ -309,8 +328,9 @@ def objdetect():
     drawRectangle(inpframe, frame, minus_frame)
 
 
+
 def drawRectangle(inp_frame, frame, minus_frame):
-    out = cv2.VideoWriter(f'{path}/output_objectDetect.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
+    global object_frames
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
     minus_Matrix = np.float32(minus_frame)
@@ -330,10 +350,9 @@ def drawRectangle(inp_frame, frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
+    #object_frames.append(frame)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
-    displayVarPath.set(str(f'{path}/output_objectDetect.avi'))
-    out.write(out_frame)
     L1.imgtk = inp_frame
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
@@ -342,6 +361,7 @@ def drawRectangle(inp_frame, frame, minus_frame):
 
 
 def deturbulence():
+    global ROI_enhanced_arr
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -361,7 +381,6 @@ def deturbulence():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
-    out = cv2.VideoWriter(f'{path}/output_deturbulence.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -375,7 +394,6 @@ def deturbulence():
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
-    ROI_enhanced_arr = []
     enhancedFrames = []
 
     if ReferenceInitializationOpt == 1:  # option 1: "Lucky" reference frame.
@@ -440,12 +458,7 @@ def deturbulence():
                       ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
-        print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        displayVarPath.set(str(f'{path}/output_deturbulence.avi'))
-        out.write(ROI_enhanced_arr[i].astype(np.uint8))
-        # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
-        # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -465,6 +478,8 @@ def deturbulence():
             L2.config(image='')
             break
         i += 1
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid, 10,'deturbulence',True)
     cv2.destroyAllWindows()
    
 
@@ -581,13 +596,10 @@ def endeturbulence():
                       ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
-        print('Frame analysis time: ', time.time() - t)
-        # cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
         frame1 = ImageTk.PhotoImage(
             Image.fromarray(ROI_arr[i].astype(np.uint8)))
         L1['image'] = frame1
         window.update()
-        # cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
         frame2 = ImageTk.PhotoImage(Image.fromarray(
             ROI_enhanced_arr[i].astype(np.uint8)))
         L2['image'] = frame2
@@ -598,7 +610,9 @@ def endeturbulence():
     cv2.destroyAllWindows()
 
 
+
 def deturbWithObjDetec():
+    global Combined_frames
     if keyboard.is_pressed('q'):
         try:
             L1.config(image='')
@@ -625,7 +639,6 @@ def deturbWithObjDetec():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
-    out = cv2.VideoWriter(f'{path}/outputCombined.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -707,11 +720,6 @@ def deturbWithObjDetec():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        displayVarPath.set(str(f'{path}/outputCombined.avi'))
-        # print("LEN OF ROI ARR: ", len(ROI_arr))
-        # print("ith frame: ", i)
-        # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
-        # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -763,18 +771,20 @@ def deturbWithObjDetec():
                 drawContours(frame, contours, -1, (0, 255, 255), 2)
 
         frame = cv2.flip(frame, 1)
-        out.write(frame)
+        Combined_frames.append(frame)
+        
+        #cv2.imshow('frame', frame)
+        
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
         L2['image'] = out_frame
         window.update()
-
-        if cv2.waitKey(20) & 0xFF == ord('q'):
-            L1.config(image='')
-            L2.config(image='')
-            break
         i += 1
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid,10,'combined',True)
     cv2.destroyAllWindows()
+    
+   
 
 
 # _____________________CREATING BUTTONS______________________
