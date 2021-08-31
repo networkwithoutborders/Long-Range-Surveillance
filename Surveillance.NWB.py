@@ -57,6 +57,7 @@ frame_width = 0
 frame_height = 0
 ROI_enhanced_arr = []
 Combined_frames = []
+object_frames = []
 fps = 0
 fat = 0
 
@@ -297,7 +298,7 @@ def objdetect():
             capture.release()
             L1.config(image='')
             L2.config(image='')
-            #write_video(object_frames,10,'object_detect')
+            write_video(object_frames,10,'object_detect')
             print("Capture released")
             return
         except:
@@ -350,7 +351,7 @@ def drawRectangle(inp_frame, frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
-    #object_frames.append(frame)
+    object_frames.append(frame)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
     L1.imgtk = inp_frame
