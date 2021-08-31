@@ -136,11 +136,11 @@ L2.pack()
 
 displayVar = StringVar()
 sample_text_fps = Label(window, bg='grey64', text="FPS: ",
-                        font=("Helvetica", 11))
+                        font=("Times New Roman", 12, 'bold'))
 sample_text_fps.place(x=40, y=85)
 
 text_fps = Label(window, bg='grey64', textvariable=displayVar,
-                 font=("Helvetica", 11))
+                 font=("Times New Roman", 12, 'bold'))
 text_fps.place(x=75, y=85)
 
 displayVarFAT = StringVar()
