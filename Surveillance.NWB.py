@@ -310,6 +310,7 @@ def objdetect():
 
 
 def drawRectangle(inp_frame, frame, minus_frame):
+    out = cv2.VideoWriter(f'{path}/output_objectDetect.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
     minus_Matrix = np.float32(minus_frame)
@@ -331,6 +332,8 @@ def drawRectangle(inp_frame, frame, minus_frame):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
+    displayVarPath.set(str(f'{path}/output_objectDetect.avi'))
+    out.write(out_frame)
     L1.imgtk = inp_frame
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
@@ -358,6 +361,7 @@ def deturbulence():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
+    out = cv2.VideoWriter(f'{path}/output_deturbulence.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -438,6 +442,8 @@ def deturbulence():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
+        displayVarPath.set(str(f'{path}/output_deturbulence.avi'))
+        out.write(ROI_enhanced_arr[i].astype(np.uint8))
         # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
         # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
         try:
@@ -619,7 +625,7 @@ def deturbWithObjDetec():
     ReferenceInitializationOpt = 2
 
     ImagesSequence = loadVideo(0)
-    out = cv2.VideoWriter(f'{path}/output.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
+    out = cv2.VideoWriter(f'{path}/outputCombined.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10,(frame_width,frame_height))
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
@@ -701,7 +707,7 @@ def deturbWithObjDetec():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        displayVarPath.set(str(f'{path}/output.avi'))
+        displayVarPath.set(str(f'{path}/outputCombined.avi'))
         # print("LEN OF ROI ARR: ", len(ROI_arr))
         # print("ith frame: ", i)
         # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
