@@ -33,7 +33,7 @@ is_close = True  # initializing_boolean_variables
 is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
 isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
-path = os.getcwd() 
+path = os.getcwd()
 
 
 # ___________________INITALIZING THE GUI WINDOW______________________
@@ -57,6 +57,8 @@ frame_width = 0
 frame_height = 0
 ROI_enhanced_arr = []
 Combined_frames = []
+object_frames = []
+iterFPS = 0
 fps = 0
 fat = 0
 
@@ -151,12 +153,12 @@ text_fps.place(x=75, y=85)
 
 displayVarPath = StringVar()
 sample_text_path = Label(window, bg='grey64', text="Path To Output: ",
-                        font=("Helvetica", 11))
-sample_text_path.place(x=40, y= 145)
+                         font=("Helvetica", 11))
+sample_text_path.place(x=40, y=145)
 
-text_path=Label(window, bg='grey64', textvariable=displayVarPath,
-                 font=("Helvetica", 11))
-text_path.place(x=130,y=145)
+text_path = Label(window, bg='grey64', textvariable=displayVarPath,
+                  font=("Helvetica", 11))
+text_path.place(x=130, y=145)
 
 
 displayVarFAT = StringVar()
@@ -245,7 +247,7 @@ text_fat.place(x=75, y=115)
 
 
 def loadVideo(videopath):
-    global frame_width , frame_height
+    global frame_width, frame_height
     ImagesSequence = []
     i = 0
     start = time.time()
@@ -275,12 +277,13 @@ def toggleCapture():
     capture = VideoCapture(0)
 
 
-def write_video(frames_list,fps,type,detur = False):
+def write_video(frames_list, fps, type, detur=False):
     if detur:
-        Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR) for Frame in frames_list]
+        Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR)
+                      for Frame in frames_list]
     displayVarPath.set(str(f'{path}/{type}.avi'))
-    out = cv2.VideoWriter(f'{path}/{type}.avi',cv2.VideoWriter_fourcc(*'DIVX'), fps, (frames_list[0].shape[1],
-                                                                              frames_list[0].shape[0]))
+    out = cv2.VideoWriter(f'{path}/{type}.avi', cv2.VideoWriter_fourcc(*'DIVX'), fps, (frames_list[0].shape[1],
+                                                                                       frames_list[0].shape[0]))
     for i in range(len(frames_list)):
         if detur:
             out.write(Frames_BGR[i].astype(np.uint8))
@@ -290,19 +293,23 @@ def write_video(frames_list,fps,type,detur = False):
 
 
 def objdetect():
+    global iterFPS
     isVideoCaptureOpen = True
+    i = 0
     if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
         try:
             isVideoCaptureOpen = False
             capture.release()
             L1.config(image='')
             L2.config(image='')
-            #write_video(object_frames,10,'object_detect')
+            write_video(object_frames, 10, 'object_detect')
             print("Capture released")
             return
         except:
             print("Some error has occured")
+    start = time.time()
     (ret_old, old_frame) = capture.read()
+    iterFPS += 1
     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
     if(is_blur):
         gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
@@ -312,9 +319,7 @@ def objdetect():
     frame = cv2.flip(frame, 1)
     inpframe = ImageTk.PhotoImage(
         Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
-
     gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-
     if(is_blur):
         newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
     else:
@@ -325,11 +330,10 @@ def objdetect():
     ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
     accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
-    drawRectangle(inpframe, frame, minus_frame)
+    drawRectangle(inpframe, frame, minus_frame, start, iterFPS)
 
 
-
-def drawRectangle(inp_frame, frame, minus_frame):
+def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
     global object_frames
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
@@ -350,13 +354,17 @@ def drawRectangle(inp_frame, frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
-    #object_frames.append(frame)
+    end = time.time()
+    object_frames.append(frame)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
     L1.imgtk = inp_frame
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
     L2.configure(image=out_frame)
+    fps = iterFPS/(end-start_time)
+    # displayVar.set(str(int(np.random.randint(18, 23))))
+    displayVar.set(str(int(fps)))
     L2.after(1, objdetect)
 
 
@@ -470,7 +478,7 @@ def deturbulence():
             return
         L1['image'] = inp_roi
         L2['image'] = out_roi
-       
+
         window.update()
 
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -478,10 +486,10 @@ def deturbulence():
             L2.config(image='')
             break
         i += 1
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    write_video(concatenatedVid, 10,'deturbulence',True)
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros(
+        (ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid, 10, 'deturbulence', True)
     cv2.destroyAllWindows()
-   
 
 
 def endeturbulence():
@@ -608,7 +616,6 @@ def endeturbulence():
             break
         i += 1
     cv2.destroyAllWindows()
-
 
 
 def deturbWithObjDetec():
@@ -772,19 +779,18 @@ def deturbWithObjDetec():
 
         frame = cv2.flip(frame, 1)
         Combined_frames.append(frame)
-        
+
         #cv2.imshow('frame', frame)
-        
+
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
         L2['image'] = out_frame
         window.update()
         i += 1
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    write_video(concatenatedVid,10,'combined',True)
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros(
+        (ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid, 10, 'combined', True)
     cv2.destroyAllWindows()
-    
-   
 
 
 # _____________________CREATING BUTTONS______________________
