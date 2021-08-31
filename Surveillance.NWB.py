@@ -145,11 +145,11 @@ text_fps.place(x=75, y=85)
 
 displayVarFAT = StringVar()
 sample_text_fat = Label(window, bg='grey64', text="FAT: ",
-                        font=("Helvetica", 11))
+                        font=("Times New Roman", 12, 'bold'))
 sample_text_fat.place(x=40, y=115)
 
 text_fat = Label(window, bg='grey64', textvariable=displayVarFAT,
-                 font=("Helvetica", 11))
+                 font=("Times New Roman", 12, 'bold'))
 text_fat.place(x=75, y=115)
 
 # ___________________Old Object detection code___________________
