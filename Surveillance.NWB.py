@@ -33,8 +33,16 @@ is_close = True  # initializing_boolean_variables
 is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
 isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
-path = os.getcwd() 
 
+#______________________OUTPUT_________________________________________
+
+parent_dir = os.getcwd() 
+directory = "results"
+path = os.path.join(parent_dir,directory)
+try:
+    os.mkdir(path)
+except OSError as error:
+    pass    
 
 # ___________________INITALIZING THE GUI WINDOW______________________
 
@@ -118,13 +126,7 @@ title = Label(window, text="Surveillance System", font=(
 # label_file_explorer.place(x=20,y=60)
 
 
-'''def browseFiles():
-    global source_file
-    source_file = filedialog.askopenfilename(
-        initialdir="/", title="Select a File", filetypes=[('All Files', '.*')], parent=window)
-    label_file_explorer.configure(text="File: "+source_file)
-    return source_file
-'''
+
 
 
 input_frame = LabelFrame(window.geometry('500x700'), text="Input", font=(
