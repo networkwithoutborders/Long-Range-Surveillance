@@ -385,43 +385,28 @@ def deturbulence():
     m_aperture = 0.06
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
-    readVideo = 1
+
     # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-    ReferenceInitializationOpt = 2
+   
 
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     print(f"THIS IS ROI: {roi}")
-    roi_plate_250 = (1092, 830, 564, 228)
-    roi_test = (310, 279, 200, 128)
-    if readVideo:
-        ROI_coord = roi
-    else:
-        ROI_coord = roi_plate_250
+   
+   
+    ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
     enhancedFrames = []
 
-    if ReferenceInitializationOpt == 1:  # option 1: "Lucky" reference frame.
-        # create Reference frame by using "lucky imaging" concept on first N_reference frames.
-        FusedPatch = MaxSharpnessFusedPatch([frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-                                             for frame in ImagesSequence[:N_FirstReference]], patch_half_size)
-        ReferenceFrame = ImagesSequence[N_FirstReference]
-        ReferenceFrame[ROI_coord[0] + patch_half_size[0]:ROI_coord[0] + ROI_coord[2] - patch_half_size[0],
-                       ROI_coord[1] + patch_half_size[1]:ROI_coord[1] + ROI_coord[3] - patch_half_size[1]] = FusedPatch
-        startRegistrationFrame = N_FirstReference
+
     # option 2: Mean of N_FirstReference frames.
-    elif ReferenceInitializationOpt == 2:
-        ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-        startRegistrationFrame = N_FirstReference
-    elif ReferenceInitializationOpt == 3:  # option 3: first frame
-        ReferenceFrame = ImagesSequence[0]
-        startRegistrationFrame = 1
-    else:
-        assert Exception("only values 1, 2 or 3 are acceptable")
+    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+    startRegistrationFrame = N_FirstReference
+
     enhancedFrames.append(ReferenceFrame)
     i = 0
     for frame in ImagesSequence[startRegistrationFrame:]:
@@ -643,44 +628,26 @@ def deturbWithObjDetec():
     m_aperture = 0.06
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
-    readVideo = 1
-    # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-    ReferenceInitializationOpt = 2
-
+    
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     # print(f"THIS IS ROI: {roi}")
-    roi_plate_250 = (1092, 830, 564, 228)
-    roi_test = (310, 279, 200, 128)
-    if readVideo:
-        ROI_coord = roi
-    else:
-        ROI_coord = roi_plate_250
+
+    
+    ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
     ROI_enhanced_arr = []
     enhancedFrames = []
 
-    if ReferenceInitializationOpt == 1:  # option 1: "Lucky" reference frame.
-        # create Reference frame by using "lucky imaging" concept on first N_reference frames.
-        FusedPatch = MaxSharpnessFusedPatch([frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-                                             for frame in ImagesSequence[:N_FirstReference]], patch_half_size)
-        ReferenceFrame = ImagesSequence[N_FirstReference]
-        ReferenceFrame[ROI_coord[0] + patch_half_size[0]:ROI_coord[0] + ROI_coord[2] - patch_half_size[0],
-                       ROI_coord[1] + patch_half_size[1]:ROI_coord[1] + ROI_coord[3] - patch_half_size[1]] = FusedPatch
-        startRegistrationFrame = N_FirstReference
+    
     # option 2: Mean of N_FirstReference frames.
-    elif ReferenceInitializationOpt == 2:
-        ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-        startRegistrationFrame = N_FirstReference
-    elif ReferenceInitializationOpt == 3:  # option 3: first frame
-        ReferenceFrame = ImagesSequence[0]
-        startRegistrationFrame = 1
-    else:
-        assert Exception("only values 1, 2 or 3 are acceptable")
+   
+    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+    startRegistrationFrame = N_FirstReference
     enhancedFrames.append(ReferenceFrame)
     i = 0
     # print("LEN OF IMAGES SEQUENCE : ", len(ImagesSequence))
