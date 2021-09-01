@@ -10,7 +10,6 @@ from PIL import ImageTk, Image
 import cv2
 from cv2 import *
 import numpy as np
-import os
 import sys
 import time
 import argparse
@@ -61,12 +60,14 @@ current_value2 = IntVar()
 # _______________________Global Variables__________________________
 
 capture = VideoCapture(0)
+
 frame_width = 0
 frame_height = 0
 ROI_enhanced_arr = []
 Combined_frames = []
 object_frames = []
 iterFPS =0
+
 fps = 0
 fat = 0
 
@@ -146,106 +147,23 @@ L2.pack()
 
 displayVar = StringVar()
 sample_text_fps = Label(window, bg='grey64', text="FPS: ",
-                        font=("Helvetica", 11))
+                        font=("Times New Roman", 12, 'bold'))
 sample_text_fps.place(x=40, y=85)
 
 text_fps = Label(window, bg='grey64', textvariable=displayVar,
-                 font=("Helvetica", 11))
+                 font=("Times New Roman", 12, 'bold'))
 text_fps.place(x=75, y=85)
-
-displayVarPath = StringVar()
-sample_text_path = Label(window, bg='grey64', text="Path To Output: ",
-                        font=("Helvetica", 11))
-sample_text_path.place(x=40, y= 145)
-
-text_path=Label(window, bg='grey64', textvariable=displayVarPath,
-                 font=("Helvetica", 11))
-text_path.place(x=130,y=145)
-
 
 displayVarFAT = StringVar()
 sample_text_fat = Label(window, bg='grey64', text="FAT: ",
-                        font=("Helvetica", 11))
+                        font=("Times New Roman", 12, 'bold'))
 sample_text_fat.place(x=40, y=115)
 
 text_fat = Label(window, bg='grey64', textvariable=displayVarFAT,
-                 font=("Helvetica", 11))
+                 font=("Times New Roman", 12, 'bold'))
 text_fat.place(x=75, y=115)
 
-# ___________________Old Object detection code___________________
-
-# def objdetect():
-#     # source_file = browseFiles()
-#     # RealTime data
-#     capture = VideoCapture(0)
-#     while(1):
-#         (ret_old, old_frame) = capture.read()
-#         gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-#         if(is_blur):
-#             gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-#         oldBlurMatrix = np.float32(gray_oldframe)
-#         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-#         while(True):
-#             ret, frame = capture.read()
-#             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-#             if(is_blur):
-#                 newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-#             else:
-#                 newBlur_frame = gray_frame
-#             newBlurMatrix = np.float32(newBlur_frame)
-#             minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-#             ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-#             accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
-
-#             imshow('Input', frame)
-
-#             drawRectangle(frame, minus_frame)
-
-#             if cv2.waitKey(20) & 0xFF == ord('q'):
-#                 break
-#         capture.release()
-#         cv2.destroyAllWindows()
-
-
-# def drawRectangle(frame, minus_frame):
-#     if(is_blur):
-#         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
-#     minus_Matrix = np.float32(minus_frame)
-#     if(is_close):
-#         for i in range(get_current_value1()):
-#             minus_Matrix = dilate(minus_Matrix, kernel_d)
-
-#         for i in range(get_current_value2()):
-#             minus_Matrix = erode(minus_Matrix, kernel_e)
-
-#     minus_Matrix = np.clip(minus_Matrix, 0, 255)
-#     minus_Matrix = np.array(minus_Matrix, np.uint8)
-#     contours, hierarchy = findContours(
-#         minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
-#     for c in contours:
-#         (x, y, w, h) = boundingRect(c)
-#         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-#         if(is_draw_ct):
-#             drawContours(frame, contours, -1, (0, 255, 255), 1)
-#     imshow('Object_Detection', frame)
-
-# def loadVideo(videopath):
-#     ImagesSequence = []
-#     capture = cv2.VideoCapture(videopath)
-#     while(True):
-#         ret, frame = capture.read()
-#         if ret == True:
-#             frame = cv2.flip(frame, 1)
-#             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-#             cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-#             if cv2.waitKey(25) & 0xFF == ord('q'):
-#                 break
-
-#     capture.release()
-#     cv2.destroyAllWindows()
-#     return ImagesSequence
-
-# ___________________New Object detection code___________________
+# ___________________Object detection code___________________
 
 
 def loadVideo(videopath):
@@ -332,6 +250,7 @@ def objdetect():
     accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
     drawRectangle(inpframe, frame, minus_frame, start, iterFPS)
+
 
 
 def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
@@ -453,6 +372,7 @@ def deturbulence():
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
+
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -464,7 +384,6 @@ def deturbulence():
             return
         L1['image'] = inp_roi
         L2['image'] = out_roi
-       
         window.update()
 
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -475,7 +394,6 @@ def deturbulence():
     concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
     write_video(concatenatedVid, 10,'deturbulence',True)
     cv2.destroyAllWindows()
-   
 
 
 def endeturbulence():
@@ -696,6 +614,7 @@ def deturbWithObjDetec():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
+
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -747,10 +666,10 @@ def deturbWithObjDetec():
                 drawContours(frame, contours, -1, (0, 255, 255), 2)
 
         frame = cv2.flip(frame, 1)
+
         Combined_frames.append(frame)
         
-        #cv2.imshow('frame', frame)
-        
+
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
         L2['image'] = out_frame
