@@ -163,6 +163,16 @@ text_fat = Label(window, bg='grey64', textvariable=displayVarFAT,
                  font=("Times New Roman", 12, 'bold'))
 text_fat.place(x=75, y=115)
 
+displayVarPath = StringVar()
+sample_text_path = Label(window, bg='grey64', text="Path To Output: ", 
+                         font=("Times New Roman", 12, 'bold'))
+sample_text_path.place(x=40, y =145)
+
+text_path = Label(window, bg='grey64', textvariable=displayVarPath,
+                 font=("Times New Roman", 12, 'bold')) 
+text_path.place(x=140, y=145)
+    
+
 # ___________________Object detection code___________________
 
 
