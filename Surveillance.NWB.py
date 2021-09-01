@@ -32,20 +32,16 @@ is_close = True  # initializing_boolean_variables
 is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
 isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
-<<<<<<< HEAD
-path = os.getcwd()
-=======
->>>>>>> origin/Aarsh
 
-#______________________OUTPUT_________________________________________
+# ______________________OUTPUT_________________________________________
 
-parent_dir = os.getcwd() 
+parent_dir = os.getcwd()
 directory = "results"
-path = os.path.join(parent_dir,directory)
+path = os.path.join(parent_dir, directory)
 try:
     os.mkdir(path)
 except OSError as error:
-    pass    
+    pass
 
 # ___________________INITALIZING THE GUI WINDOW______________________
 
@@ -70,12 +66,8 @@ frame_height = 0
 ROI_enhanced_arr = []
 Combined_frames = []
 object_frames = []
-<<<<<<< HEAD
 iterFPS = 0
-=======
-iterFPS =0
 
->>>>>>> origin/Aarsh
 fps = 0
 fat = 0
 
@@ -135,9 +127,6 @@ title = Label(window, text="Surveillance System", font=(
 # label_file_explorer.place(x=20,y=60)
 
 
-
-
-
 input_frame = LabelFrame(window.geometry('500x700'), text="Input", font=(
     "Times New Roman", 18, 'bold'), bg="grey64")
 input_frame.pack(side='left', expand='yes')
@@ -162,19 +151,6 @@ text_fps = Label(window, bg='grey64', textvariable=displayVar,
                  font=("Times New Roman", 12, 'bold'))
 text_fps.place(x=75, y=85)
 
-<<<<<<< HEAD
-displayVarPath = StringVar()
-sample_text_path = Label(window, bg='grey64', text="Path To Output: ",
-                         font=("Helvetica", 11))
-sample_text_path.place(x=40, y=145)
-
-text_path = Label(window, bg='grey64', textvariable=displayVarPath,
-                  font=("Helvetica", 11))
-text_path.place(x=130, y=145)
-
-
-=======
->>>>>>> origin/Aarsh
 displayVarFAT = StringVar()
 sample_text_fat = Label(window, bg='grey64', text="FAT: ",
                         font=("Times New Roman", 12, 'bold'))
@@ -185,14 +161,14 @@ text_fat = Label(window, bg='grey64', textvariable=displayVarFAT,
 text_fat.place(x=75, y=115)
 
 displayVarPath = StringVar()
-sample_text_path = Label(window, bg='grey64', text="Path To Output: ", 
+sample_text_path = Label(window, bg='grey64', text="Path To Output: ",
                          font=("Times New Roman", 12, 'bold'))
-sample_text_path.place(x=40, y =145)
+sample_text_path.place(x=40, y=145)
 
 text_path = Label(window, bg='grey64', textvariable=displayVarPath,
-                 font=("Times New Roman", 12, 'bold')) 
+                  font=("Times New Roman", 12, 'bold'))
 text_path.place(x=140, y=145)
-    
+
 
 # ___________________Object detection code___________________
 
@@ -284,7 +260,6 @@ def objdetect():
     drawRectangle(inpframe, frame, minus_frame, start, iterFPS)
 
 
-
 def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
     global object_frames
     if(is_blur):
@@ -338,21 +313,18 @@ def deturbulence():
     fno = m_focal_length / m_aperture
 
     # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-   
 
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     print(f"THIS IS ROI: {roi}")
-   
-   
+
     ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
     enhancedFrames = []
-
 
     # option 2: Mean of N_FirstReference frames.
     ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
@@ -416,10 +388,6 @@ def deturbulence():
             return
         L1['image'] = inp_roi
         L2['image'] = out_roi
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/Aarsh
         window.update()
 
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -582,14 +550,13 @@ def deturbWithObjDetec():
     m_aperture = 0.06
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
-    
+
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     # print(f"THIS IS ROI: {roi}")
 
-    
     ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
@@ -597,9 +564,8 @@ def deturbWithObjDetec():
     ROI_enhanced_arr = []
     enhancedFrames = []
 
-    
     # option 2: Mean of N_FirstReference frames.
-   
+
     ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
     startRegistrationFrame = N_FirstReference
     enhancedFrames.append(ReferenceFrame)
@@ -704,12 +670,6 @@ def deturbWithObjDetec():
         frame = cv2.flip(frame, 1)
 
         Combined_frames.append(frame)
-<<<<<<< HEAD
-
-        #cv2.imshow('frame', frame)
-=======
-        
->>>>>>> origin/Aarsh
 
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
