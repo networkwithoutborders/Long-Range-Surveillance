@@ -33,6 +33,15 @@ is_draw_ct = False  # initializing_boolean_variables
 fac = 2  # initializing_integer_variables
 isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
 
+#______________________OUTPUT_________________________________________
+
+parent_dir = os.getcwd() 
+directory = "results"
+path = os.path.join(parent_dir,directory)
+try:
+    os.mkdir(path)
+except OSError as error:
+    pass    
 
 # ___________________INITALIZING THE GUI WINDOW______________________
 
@@ -51,6 +60,14 @@ current_value2 = IntVar()
 # _______________________Global Variables__________________________
 
 capture = VideoCapture(0)
+
+frame_width = 0
+frame_height = 0
+ROI_enhanced_arr = []
+Combined_frames = []
+object_frames = []
+iterFPS =0
+
 fps = 0
 fat = 0
 
@@ -110,13 +127,7 @@ title = Label(window, text="Surveillance System", font=(
 # label_file_explorer.place(x=20,y=60)
 
 
-'''def browseFiles():
-    global source_file
-    source_file = filedialog.askopenfilename(
-        initialdir="/", title="Select a File", filetypes=[('All Files', '.*')], parent=window)
-    label_file_explorer.configure(text="File: "+source_file)
-    return source_file
-'''
+
 
 
 input_frame = LabelFrame(window.geometry('500x700'), text="Input", font=(
@@ -152,87 +163,17 @@ text_fat = Label(window, bg='grey64', textvariable=displayVarFAT,
                  font=("Times New Roman", 12, 'bold'))
 text_fat.place(x=75, y=115)
 
-# ___________________Old Object detection code___________________
-
-# def objdetect():
-#     # source_file = browseFiles()
-#     # RealTime data
-#     capture = VideoCapture(0)
-#     while(1):
-#         (ret_old, old_frame) = capture.read()
-#         gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
-#         if(is_blur):
-#             gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-#         oldBlurMatrix = np.float32(gray_oldframe)
-#         accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
-#         while(True):
-#             ret, frame = capture.read()
-#             gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-#             if(is_blur):
-#                 newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-#             else:
-#                 newBlur_frame = gray_frame
-#             newBlurMatrix = np.float32(newBlur_frame)
-#             minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-#             ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-#             accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
-
-#             imshow('Input', frame)
-
-#             drawRectangle(frame, minus_frame)
-
-#             if cv2.waitKey(20) & 0xFF == ord('q'):
-#                 break
-#         capture.release()
-#         cv2.destroyAllWindows()
-
-
-# def drawRectangle(frame, minus_frame):
-#     if(is_blur):
-#         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
-#     minus_Matrix = np.float32(minus_frame)
-#     if(is_close):
-#         for i in range(get_current_value1()):
-#             minus_Matrix = dilate(minus_Matrix, kernel_d)
-
-#         for i in range(get_current_value2()):
-#             minus_Matrix = erode(minus_Matrix, kernel_e)
-
-#     minus_Matrix = np.clip(minus_Matrix, 0, 255)
-#     minus_Matrix = np.array(minus_Matrix, np.uint8)
-#     contours, hierarchy = findContours(
-#         minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
-#     for c in contours:
-#         (x, y, w, h) = boundingRect(c)
-#         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-#         if(is_draw_ct):
-#             drawContours(frame, contours, -1, (0, 255, 255), 1)
-#     imshow('Object_Detection', frame)
-
-# def loadVideo(videopath):
-#     ImagesSequence = []
-#     capture = cv2.VideoCapture(videopath)
-#     while(True):
-#         ret, frame = capture.read()
-#         if ret == True:
-#             frame = cv2.flip(frame, 1)
-#             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-#             cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-#             if cv2.waitKey(25) & 0xFF == ord('q'):
-#                 break
-
-#     capture.release()
-#     cv2.destroyAllWindows()
-#     return ImagesSequence
-
-# ___________________New Object detection code___________________
+# ___________________Object detection code___________________
 
 
 def loadVideo(videopath):
+    global frame_width , frame_height
     ImagesSequence = []
     i = 0
     start = time.time()
     capture = cv2.VideoCapture(videopath)
+    frame_width = int(capture.get(3))
+    frame_height = int(capture.get(4))
     while(True):
         ret, frame = capture.read()
         i += 1
@@ -242,7 +183,6 @@ def loadVideo(videopath):
             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             fps = i/(end-start)
-            print("FPS: ", fps)
             displayVar.set(str(int(fps)))
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
@@ -257,19 +197,38 @@ def toggleCapture():
     capture = VideoCapture(0)
 
 
+def write_video(frames_list,fps,type,detur = False):
+    if detur:
+        Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR) for Frame in frames_list]
+    displayVarPath.set(str(f'{path}/{type}.mp4'))
+    out = cv2.VideoWriter(f'{path}/{type}.mp4',cv2.VideoWriter_fourcc(*'MP4V'), fps, (frames_list[0].shape[1],
+                                                                              frames_list[0].shape[0]))
+    for i in range(len(frames_list)):
+        if detur:
+            out.write(Frames_BGR[i].astype(np.uint8))
+        else:
+            out.write(frames_list[i])
+    out.release()
+
+
 def objdetect():
+    global iterFPS
     isVideoCaptureOpen = True
+    i = 0
     if keyboard.is_pressed('q') and isVideoCaptureOpen == True:
         try:
             isVideoCaptureOpen = False
             capture.release()
             L1.config(image='')
             L2.config(image='')
+            write_video(object_frames, 10, 'object_detect')
             print("Capture released")
             return
         except:
             print("Some error has occured")
+    start = time.time()
     (ret_old, old_frame) = capture.read()
+    iterFPS += 1
     gray_oldframe = cvtColor(old_frame, COLOR_BGR2GRAY)
     if(is_blur):
         gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
@@ -279,9 +238,7 @@ def objdetect():
     frame = cv2.flip(frame, 1)
     inpframe = ImageTk.PhotoImage(
         Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
-
     gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
-
     if(is_blur):
         newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
     else:
@@ -292,10 +249,12 @@ def objdetect():
     ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
     accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
 
-    drawRectangle(inpframe, frame, minus_frame)
+    drawRectangle(inpframe, frame, minus_frame, start, iterFPS)
 
 
-def drawRectangle(inp_frame, frame, minus_frame):
+
+def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
+    global object_frames
     if(is_blur):
         minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
     minus_Matrix = np.float32(minus_frame)
@@ -315,16 +274,22 @@ def drawRectangle(inp_frame, frame, minus_frame):
         rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         if(is_draw_ct):
             drawContours(frame, contours, -1, (0, 255, 255), 2)
+    end = time.time()
+    object_frames.append(frame)
     out_frame = ImageTk.PhotoImage(Image.fromarray(
         cvtColor(frame, cv2.COLOR_BGR2RGB)))
     L1.imgtk = inp_frame
     L1.configure(image=inp_frame)
     L2.imgtk = out_frame
     L2.configure(image=out_frame)
+    fps = iterFPS/(end-start_time)
+    # displayVar.set(str(int(np.random.randint(18, 23))))
+    displayVar.set(str(int(fps)))
     L2.after(1, objdetect)
 
 
 def deturbulence():
+    global ROI_enhanced_arr
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -339,44 +304,28 @@ def deturbulence():
     m_aperture = 0.06
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
-    readVideo = 1
+
     # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-    ReferenceInitializationOpt = 2
+   
 
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     print(f"THIS IS ROI: {roi}")
-    roi_plate_250 = (1092, 830, 564, 228)
-    roi_test = (310, 279, 200, 128)
-    if readVideo:
-        ROI_coord = roi
-    else:
-        ROI_coord = roi_plate_250
+   
+   
+    ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
-    ROI_enhanced_arr = []
     enhancedFrames = []
 
-    if ReferenceInitializationOpt == 1:  # option 1: "Lucky" reference frame.
-        # create Reference frame by using "lucky imaging" concept on first N_reference frames.
-        FusedPatch = MaxSharpnessFusedPatch([frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-                                             for frame in ImagesSequence[:N_FirstReference]], patch_half_size)
-        ReferenceFrame = ImagesSequence[N_FirstReference]
-        ReferenceFrame[ROI_coord[0] + patch_half_size[0]:ROI_coord[0] + ROI_coord[2] - patch_half_size[0],
-                       ROI_coord[1] + patch_half_size[1]:ROI_coord[1] + ROI_coord[3] - patch_half_size[1]] = FusedPatch
-        startRegistrationFrame = N_FirstReference
+
     # option 2: Mean of N_FirstReference frames.
-    elif ReferenceInitializationOpt == 2:
-        ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-        startRegistrationFrame = N_FirstReference
-    elif ReferenceInitializationOpt == 3:  # option 3: first frame
-        ReferenceFrame = ImagesSequence[0]
-        startRegistrationFrame = 1
-    else:
-        assert Exception("only values 1, 2 or 3 are acceptable")
+    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+    startRegistrationFrame = N_FirstReference
+
     enhancedFrames.append(ReferenceFrame)
     i = 0
     for frame in ImagesSequence[startRegistrationFrame:]:
@@ -422,10 +371,8 @@ def deturbulence():
                       ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
-        print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
-        # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
+
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -444,6 +391,8 @@ def deturbulence():
             L2.config(image='')
             break
         i += 1
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid, 10,'deturbulence',True)
     cv2.destroyAllWindows()
 
 
@@ -559,13 +508,10 @@ def endeturbulence():
                       ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
         ROI_enhanced_arr.append(deblurredROI)
         enhancedFrames.append(enhancedFrame)
-        print('Frame analysis time: ', time.time() - t)
-        # cv2.imshow('Input',ROI_arr[i].astype(np.uint8))
         frame1 = ImageTk.PhotoImage(
             Image.fromarray(ROI_arr[i].astype(np.uint8)))
         L1['image'] = frame1
         window.update()
-        # cv2.imshow('Output',ROI_enhanced_arr[i].astype(np.uint8))
         frame2 = ImageTk.PhotoImage(Image.fromarray(
             ROI_enhanced_arr[i].astype(np.uint8)))
         L2['image'] = frame2
@@ -576,7 +522,9 @@ def endeturbulence():
     cv2.destroyAllWindows()
 
 
+
 def deturbWithObjDetec():
+    global Combined_frames
     if keyboard.is_pressed('q'):
         try:
             L1.config(image='')
@@ -598,44 +546,26 @@ def deturbWithObjDetec():
     m_aperture = 0.06
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
-    readVideo = 1
-    # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-    ReferenceInitializationOpt = 2
-
+    
     ImagesSequence = loadVideo(0)
     ImagesSequence = np.array(ImagesSequence).astype(dataType)
     # roi = selectROI(ImagesSequence[0], resize_factor=2)
     roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
     # print(f"THIS IS ROI: {roi}")
-    roi_plate_250 = (1092, 830, 564, 228)
-    roi_test = (310, 279, 200, 128)
-    if readVideo:
-        ROI_coord = roi
-    else:
-        ROI_coord = roi_plate_250
+
+    
+    ROI_coord = roi
     ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
                  patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
     ROI_arr = []
     ROI_enhanced_arr = []
     enhancedFrames = []
 
-    if ReferenceInitializationOpt == 1:  # option 1: "Lucky" reference frame.
-        # create Reference frame by using "lucky imaging" concept on first N_reference frames.
-        FusedPatch = MaxSharpnessFusedPatch([frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-                                             for frame in ImagesSequence[:N_FirstReference]], patch_half_size)
-        ReferenceFrame = ImagesSequence[N_FirstReference]
-        ReferenceFrame[ROI_coord[0] + patch_half_size[0]:ROI_coord[0] + ROI_coord[2] - patch_half_size[0],
-                       ROI_coord[1] + patch_half_size[1]:ROI_coord[1] + ROI_coord[3] - patch_half_size[1]] = FusedPatch
-        startRegistrationFrame = N_FirstReference
+    
     # option 2: Mean of N_FirstReference frames.
-    elif ReferenceInitializationOpt == 2:
-        ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-        startRegistrationFrame = N_FirstReference
-    elif ReferenceInitializationOpt == 3:  # option 3: first frame
-        ReferenceFrame = ImagesSequence[0]
-        startRegistrationFrame = 1
-    else:
-        assert Exception("only values 1, 2 or 3 are acceptable")
+   
+    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+    startRegistrationFrame = N_FirstReference
     enhancedFrames.append(ReferenceFrame)
     i = 0
     # print("LEN OF IMAGES SEQUENCE : ", len(ImagesSequence))
@@ -684,10 +614,7 @@ def deturbWithObjDetec():
         enhancedFrames.append(enhancedFrame)
         print('Frame analysis time: ', time.time() - t)
         displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-        # print("LEN OF ROI ARR: ", len(ROI_arr))
-        # print("ith frame: ", i)
-        # cv2.imshow('Input', ROI_arr[i].astype(np.uint8))
-        # cv2.imshow('Output', ROI_enhanced_arr[i].astype(np.uint8))
+
         try:
             inp_roi = ImageTk.PhotoImage(
                 Image.fromarray(ROI_arr[i].astype(np.uint8)))
@@ -739,17 +666,20 @@ def deturbWithObjDetec():
                 drawContours(frame, contours, -1, (0, 255, 255), 2)
 
         frame = cv2.flip(frame, 1)
+
+        Combined_frames.append(frame)
+        
+
         out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
         L1['image'] = inp_roi
         L2['image'] = out_frame
         window.update()
-
-        if cv2.waitKey(20) & 0xFF == ord('q'):
-            L1.config(image='')
-            L2.config(image='')
-            break
         i += 1
+    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros((ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
+    write_video(concatenatedVid,10,'combined',True)
     cv2.destroyAllWindows()
+    
+   
 
 
 # _____________________CREATING BUTTONS______________________
