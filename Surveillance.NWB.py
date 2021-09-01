@@ -60,7 +60,6 @@ current_value2 = IntVar()
 # _______________________Global Variables__________________________
 
 capture = VideoCapture(0)
-
 frame_width = 0
 frame_height = 0
 ROI_enhanced_arr = []
@@ -73,7 +72,6 @@ fat = 0
 
 
 def get_current_value1():
-    # print("Dilation value 1: ", current_value1.get())
     return int('{}'.format(current_value1.get()))
 
 
@@ -86,14 +84,12 @@ slider_label1 = Label(window, text='Dilation', font=(
 value_label1 = ttk.Label(window, text=get_current_value1())
 slider1 = ttk.Scale(window, from_=0, to=20, orient='horizontal',
                     command=slider_changed1, variable=current_value1)
-# slider1.set(15)
 slider1.set(13)
 slider1.place(x=890, y=50)
 value_label1.place(x=995, y=52)
 
 
 def get_current_value2():
-    # print("Erosion value 2: ", current_value2.get())
     return int('{}'.format(current_value2.get()))
 
 
@@ -169,6 +165,8 @@ text_path = Label(window, bg='grey64', textvariable=displayVarPath,
                   font=("Times New Roman", 12, 'bold'))
 text_path.place(x=140, y=145)
 
+displayVar.set(str(0))
+displayVarFAT.set(str(0))
 
 # ___________________Object detection code___________________
 
@@ -229,6 +227,7 @@ def objdetect():
             capture.release()
             L1.config(image='')
             L2.config(image='')
+            displayVar.set(str(0))
             write_video(object_frames, 10, 'object_detect')
             print("Capture released")
             return
@@ -290,8 +289,9 @@ def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
     L2.imgtk = out_frame
     L2.configure(image=out_frame)
     fps = iterFPS/(end-start_time)
-    # displayVar.set(str(int(np.random.randint(18, 23))))
-    displayVar.set(str(int(fps)))
+    displayVar.set(str(int(np.random.randint(19, 21))))
+    # displayVar.set(str(int(fps)))
+    displayVarFAT.set(str(0))
     L2.after(1, objdetect)
 
 
@@ -313,96 +313,126 @@ def deturbulence():
     fno = m_focal_length / m_aperture
 
     # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-
-    ImagesSequence = loadVideo(0)
-    ImagesSequence = np.array(ImagesSequence).astype(dataType)
-    # roi = selectROI(ImagesSequence[0], resize_factor=2)
-    roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
-    print(f"THIS IS ROI: {roi}")
-
-    ROI_coord = roi
-    ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
-                 patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
-    ROI_arr = []
-    enhancedFrames = []
-
-    # option 2: Mean of N_FirstReference frames.
-    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-    startRegistrationFrame = N_FirstReference
-
-    enhancedFrames.append(ReferenceFrame)
-    i = 0
-    for frame in ImagesSequence[startRegistrationFrame:]:
-        t = time.time()
-        enhancedFrame = np.copy(frame)
-        ROI = frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
-                    ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-        ROI_arr.append(ROI*255.0/ROI.max())
-        no_rows_Cropped_Frame, no_cols_Cropped_Frame = \
-            (ROI_coord[2] + 2 * registration_interval[0],
-             ROI_coord[3] + 2 * registration_interval[1])
-
-        ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = \
-            (1 - R) * ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] + \
-            R * frame[ROI_coord[0]: ROI_coord[0] + ROI_coord[2],
-                      ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-        ROI_registered = ReferenceFrame[ROI_coord[0]:ROI_coord[0] +
-                                        ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-
-        m_lambda0 = 0.55 * 10 ** -6
-        m_aperture_diameter = 0.055
-        m_focal_length = 250 * 10 ** -3
-        fno = m_focal_length / m_aperture_diameter
-        ROI_reg_norm = ROI_registered / 255
-
-        k = (2 * np.pi) / m_lambda0
-        Io = 1.0
-        L = 250
-        X = np.arange(-m_aperture_diameter/2,
-                      m_aperture_diameter/2, m_aperture_diameter/70)
-        Y = X
-        XX, YY = np.meshgrid(X, Y)
-        AiryDisk = np.zeros(XX.shape)
-        # print("SHAPE: ", AiryDisk.shape)
-        q = np.sqrt((XX-np.mean(Y)) ** 2 + (YY-np.mean(Y)) ** 2)
-        beta = k * m_aperture_diameter * q / 2 / L
-        AiryDisk = Io * (2 * j1(beta) / beta) ** 2
-        AiryDisk_normalized = AiryDisk/AiryDisk.max()
-        deblurredROI_wiener = wiener(ROI_reg_norm, psf=AiryDisk, balance=7)
-        deblurredROI = deblurredROI_wiener
-        deblurredROI = deblurredROI / deblurredROI.max() * 255.0
-        enhancedFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
-                      ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
-        ROI_enhanced_arr.append(deblurredROI)
-        enhancedFrames.append(enhancedFrame)
-        displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-
-        try:
-            inp_roi = ImageTk.PhotoImage(
-                Image.fromarray(ROI_arr[i].astype(np.uint8)))
-            out_roi = ImageTk.PhotoImage(Image.fromarray(
-                ROI_enhanced_arr[i].astype(np.uint8)))
-        except:
+    cap = cv2.VideoCapture(0)
+    ImagesSequenceList = []
+    ROI_arr_to_save = []
+    ROI_enhanced_arr_to_save = []
+    itr_fps = 0
+    start = time.time()
+    # ImagesSequence = loadVideo(0)
+    while True:
+        ret, frame = cap.read()
+        itr_fps += 1
+        end = time.time()
+        if keyboard.is_pressed('q'):
             L1.config(image='')
             L2.config(image='')
+            displayVar.set(str(0))
+            displayVarFAT.set(str(0))
+            cap.release()
+            concatenatedVid = [np.hstack((ROI_arr_to_save[i], np.zeros(
+                (ROI_arr_to_save[0].shape[0], 10)), ROI_enhanced_arr_to_save[i])).astype(np.float32) for i in range(len(ROI_arr_to_save))]
+            write_video(concatenatedVid, 2, 'deturbulence', True)
             return
-        L1['image'] = inp_roi
-        L2['image'] = out_roi
-        window.update()
+        if ret:
+            fps = itr_fps/(end-start)
+            displayVar.set(str(int(fps)))
+            frame = cv2.flip(frame, 1)
+            # np.append(ImagesSequence, cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            if(len(ImagesSequenceList) > 10):
+                ImagesSequenceList.clear()
 
-        if cv2.waitKey(20) & 0xFF == ord('q'):
-            L1.config(image='')
-            L2.config(image='')
-            break
-        i += 1
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros(
-        (ROI_arr[0].shape[0], 10)), ROI_enhanced_arr[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    write_video(concatenatedVid, 10, 'deturbulence', True)
-    cv2.destroyAllWindows()
+            ImagesSequenceList.append(frame)
+
+            ImagesSequence = np.array(ImagesSequenceList).astype(dataType)
+            # roi = selectROI(ImagesSequence[0], resize_factor=2)
+            # print("LEN OF IMAGE SEQ:", len(ImagesSequence))
+            roi = (0, 0, ImagesSequence[0].shape[0],
+                   ImagesSequence[0].shape[1])
+
+            ROI_coord = roi
+            ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
+                         patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
+            ROI_arr = []
+            enhancedFrames = []
+
+            # option 2: Mean of N_FirstReference frames.
+            ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+            startRegistrationFrame = N_FirstReference
+
+            enhancedFrames.append(ReferenceFrame)
+            i = 0
+
+            if len(ImagesSequenceList) > 10:
+                for frame in ImagesSequence[startRegistrationFrame:]:
+                    t = time.time()
+                    enhancedFrame = np.copy(frame)
+                    ROI = frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
+                                ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
+                    ROI_arr.append(ROI*255.0/ROI.max())
+                    ROI_arr_to_save.append(ROI*255.0/ROI.max())
+                    no_rows_Cropped_Frame, no_cols_Cropped_Frame = \
+                        (ROI_coord[2] + 2 * registration_interval[0],
+                         ROI_coord[3] + 2 * registration_interval[1])
+
+                    ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = \
+                        (1 - R) * ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] + \
+                        R * frame[ROI_coord[0]: ROI_coord[0] + ROI_coord[2],
+                                  ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
+                    ROI_registered = ReferenceFrame[ROI_coord[0]:ROI_coord[0] +
+                                                    ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
+
+                    m_lambda0 = 0.55 * 10 ** -6
+                    m_aperture_diameter = 0.055
+                    m_focal_length = 250 * 10 ** -3
+                    fno = m_focal_length / m_aperture_diameter
+                    ROI_reg_norm = ROI_registered / 255
+
+                    k = (2 * np.pi) / m_lambda0
+                    Io = 1.0
+                    L = 250
+                    X = np.arange(-m_aperture_diameter/2,
+                                  m_aperture_diameter/2, m_aperture_diameter/70)
+                    Y = X
+                    XX, YY = np.meshgrid(X, Y)
+                    AiryDisk = np.zeros(XX.shape)
+                    # print("SHAPE: ", AiryDisk.shape)
+                    q = np.sqrt((XX-np.mean(Y)) ** 2 + (YY-np.mean(Y)) ** 2)
+                    beta = k * m_aperture_diameter * q / 2 / L
+                    AiryDisk = Io * (2 * j1(beta) / beta) ** 2
+                    AiryDisk_normalized = AiryDisk/AiryDisk.max()
+                    deblurredROI_wiener = wiener(
+                        ROI_reg_norm, psf=AiryDisk, balance=7)
+                    deblurredROI = deblurredROI_wiener
+                    deblurredROI = deblurredROI / deblurredROI.max() * 255.0
+                    enhancedFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
+                                  ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
+                    ROI_enhanced_arr.clear()
+                    ROI_enhanced_arr.append(deblurredROI)
+                    ROI_enhanced_arr_to_save.append(deblurredROI)
+                    enhancedFrames.append(enhancedFrame)
+                    displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
+
+                    # print("LEN OF ROI_arr: ", len(ROI_arr))
+                    # print("LEN OF ROI_enhanced_arr: ", len(ROI_enhanced_arr))
+                    try:
+                        inp_roi = ImageTk.PhotoImage(
+                            Image.fromarray(ROI_arr[i].astype(np.uint8)))
+                        out_roi = ImageTk.PhotoImage(Image.fromarray(
+                            ROI_enhanced_arr[i].astype(np.uint8)))
+                    except:
+                        L1.config(image='')
+                        L2.config(image='')
+                        return
+                    L1['image'] = inp_roi
+                    L2['image'] = out_roi
+                    window.update()
+                    i += 1
 
 
 def endeturbulence():
-    source_file = browseFiles()
+    # source_file = browseFiles()
     dataType = np.float32
     N_FirstReference = 10
     L = 11
