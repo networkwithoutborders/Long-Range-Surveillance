@@ -558,14 +558,7 @@ def endeturbulence():
 
 
 def deturbWithObjDetec():
-    global Combined_frames
-    if keyboard.is_pressed('q'):
-        try:
-            L1.config(image='')
-            L2.config(image='')
-            return
-        except:
-            print("Some error has occured")
+    # global Combined_frames
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -581,135 +574,176 @@ def deturbWithObjDetec():
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
 
-    ImagesSequence = loadVideo(0)
-    ImagesSequence = np.array(ImagesSequence).astype(dataType)
-    # roi = selectROI(ImagesSequence[0], resize_factor=2)
-    roi = (0, 0, ImagesSequence[0].shape[0], ImagesSequence[0].shape[1])
-    # print(f"THIS IS ROI: {roi}")
-
-    ROI_coord = roi
-    ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
-                 patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
-    ROI_arr = []
-    ROI_enhanced_arr = []
-    enhancedFrames = []
-
-    # option 2: Mean of N_FirstReference frames.
-
-    ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
-    startRegistrationFrame = N_FirstReference
-    enhancedFrames.append(ReferenceFrame)
-    i = 0
-    # print("LEN OF IMAGES SEQUENCE : ", len(ImagesSequence))
-    for frame in ImagesSequence[startRegistrationFrame:]:
-        t = time.time()
-        enhancedFrame = np.copy(frame)
-        ROI = frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
-                    ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-        ROI_arr.append(ROI*255.0/ROI.max())
-        no_rows_Cropped_Frame, no_cols_Cropped_Frame = \
-            (ROI_coord[2] + 2 * registration_interval[0],
-             ROI_coord[3] + 2 * registration_interval[1])
-
-        ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = \
-            (1 - R) * ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] + \
-            R * frame[ROI_coord[0]: ROI_coord[0] + ROI_coord[2],
-                      ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-        ROI_registered = ReferenceFrame[ROI_coord[0]:ROI_coord[0] +
-                                        ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
-
-        m_lambda0 = 0.55 * 10 ** -6
-        m_aperture_diameter = 0.055
-        m_focal_length = 250 * 10 ** -3
-        fno = m_focal_length / m_aperture_diameter
-        ROI_reg_norm = ROI_registered / 255
-
-        k = (2 * np.pi) / m_lambda0
-        Io = 1.0
-        L = 250
-        X = np.arange(-m_aperture_diameter/2,
-                      m_aperture_diameter/2, m_aperture_diameter/70)
-        Y = X
-        XX, YY = np.meshgrid(X, Y)
-        AiryDisk = np.zeros(XX.shape)
-        # print("SHAPE: ", AiryDisk.shape)
-        q = np.sqrt((XX-np.mean(Y)) ** 2 + (YY-np.mean(Y)) ** 2)
-        beta = k * m_aperture_diameter * q / 2 / L
-        AiryDisk = Io * (2 * j1(beta) / beta) ** 2
-        AiryDisk_normalized = AiryDisk/AiryDisk.max()
-        deblurredROI_wiener = wiener(ROI_reg_norm, psf=AiryDisk, balance=7)
-        deblurredROI = deblurredROI_wiener
-        deblurredROI = deblurredROI / deblurredROI.max() * 255.0
-        enhancedFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
-                      ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
-        ROI_enhanced_arr.append(deblurredROI)
-        enhancedFrames.append(enhancedFrame)
-        print('Frame analysis time: ', time.time() - t)
-        displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
-
-        try:
-            inp_roi = ImageTk.PhotoImage(
-                Image.fromarray(ROI_arr[i].astype(np.uint8)))
-            out_roi = ImageTk.PhotoImage(Image.fromarray(
-                ROI_enhanced_arr[i].astype(np.uint8)))
-        except:
+    cap = cv2.VideoCapture(0)
+    ImagesSequenceList = []
+    ROI_arr_to_save = []
+    ROI_enhanced_arr_to_save = []
+    Combined_frames = []
+    Combined_frames_to_save = []
+    itr_fps = 0
+    start = time.time()
+    # ImagesSequence = loadVideo(0)
+    while True:
+        ret, frame = cap.read()
+        itr_fps += 1
+        end = time.time()
+        if keyboard.is_pressed('q'):
             L1.config(image='')
             L2.config(image='')
+            displayVar.set(str(0))
+            displayVarFAT.set(str(0))
+            cap.release()
+            concatenatedVid = [np.hstack((ROI_arr_to_save[i], np.zeros(
+                (ROI_arr_to_save[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr_to_save))]
+            write_video(concatenatedVid, 2, 'combined', True)
             return
+        if ret:
+            frame = cv2.flip(frame, 1)
+            fps = itr_fps/(end-start)
+            displayVar.set(str(int(fps)))
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
 
-        gray_oldframe = ROI_arr[i].astype(np.uint8)
-        if(is_blur):
-            gray_oldframe = GaussianBlur(gray_oldframe, kernel_gauss, 0)
-        oldBlurMatrix = np.float32(gray_oldframe)
-        accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
+            if(len(ImagesSequenceList) > 10):
+                ImagesSequenceList.clear()
 
-        frame = cv2.flip(ROI_enhanced_arr[i].astype(np.uint8), 1)
+            ImagesSequenceList.append(frame)
+            ImagesSequence = np.array(ImagesSequenceList).astype(dataType)
+            # roi = selectROI(ImagesSequence[0], resize_factor=2)
+            roi = (0, 0, ImagesSequence[0].shape[0],
+                   ImagesSequence[0].shape[1])
 
-        gray_frame = frame
+            ROI_coord = roi
+            ROI_coord = (ROI_coord[1], ROI_coord[0], patch_size[1] * int(ROI_coord[3] / patch_size[1]),
+                         patch_size[0] * int(ROI_coord[2] / patch_size[0]))  # now roi[0] - rows!
+            ROI_arr = []
+            ROI_enhanced_arr = []
+            enhancedFrames = []
 
-        if(is_blur):
-            newBlur_frame = GaussianBlur(gray_frame, kernel_gauss, 0)
-        else:
-            newBlur_frame = gray_frame
+            # option 2: Mean of N_FirstReference frames.
 
-        newBlurMatrix = np.float32(newBlur_frame)
-        minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
-        ret, minus_frame = threshold(minusMatrix, 60, 255.0, THRESH_BINARY)
-        accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
+            ReferenceFrame = np.mean(ImagesSequence[:N_FirstReference], axis=0)
+            startRegistrationFrame = N_FirstReference
+            enhancedFrames.append(ReferenceFrame)
+            i = 0
+            # print("LEN OF IMAGES SEQUENCE : ", len(ImagesSequence))
+            if len(ImagesSequenceList) > 10:
+                for frame in ImagesSequence[startRegistrationFrame:]:
+                    t = time.time()
+                    enhancedFrame = np.copy(frame)
+                    ROI = frame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
+                                ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
+                    ROI_arr.append(ROI*255.0/ROI.max())
+                    ROI_arr_to_save.append(ROI*255.0/ROI.max())
+                    no_rows_Cropped_Frame, no_cols_Cropped_Frame = \
+                        (ROI_coord[2] + 2 * registration_interval[0],
+                         ROI_coord[3] + 2 * registration_interval[1])
 
-        if(is_blur):
-            minus_frame = GaussianBlur(minus_frame, kernel_gauss, 0)
-        minus_Matrix = np.float32(minus_frame)
-        if(is_close):
-            for itr in range(get_current_value1()):
-                minus_Matrix = dilate(minus_Matrix, kernel_d)
+                    ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = \
+                        (1 - R) * ReferenceFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] + \
+                        R * frame[ROI_coord[0]: ROI_coord[0] + ROI_coord[2],
+                                  ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
+                    ROI_registered = ReferenceFrame[ROI_coord[0]:ROI_coord[0] +
+                                                    ROI_coord[2], ROI_coord[1]:ROI_coord[1] + ROI_coord[3]]
 
-            for itr in range(get_current_value2()):
-                minus_Matrix = erode(minus_Matrix, kernel_e)
+                    m_lambda0 = 0.55 * 10 ** -6
+                    m_aperture_diameter = 0.055
+                    m_focal_length = 250 * 10 ** -3
+                    fno = m_focal_length / m_aperture_diameter
+                    ROI_reg_norm = ROI_registered / 255
 
-        minus_Matrix = np.clip(minus_Matrix, 0, 255)
-        minus_Matrix = np.array(minus_Matrix, np.uint8)
-        contours, hierarchy = findContours(
-            minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
-        for c in contours:
-            (x, y, w, h) = boundingRect(c)
-            rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            if(is_draw_ct):
-                drawContours(frame, contours, -1, (0, 255, 255), 2)
+                    k = (2 * np.pi) / m_lambda0
+                    Io = 1.0
+                    L = 250
+                    X = np.arange(-m_aperture_diameter/2,
+                                  m_aperture_diameter/2, m_aperture_diameter/70)
+                    Y = X
+                    XX, YY = np.meshgrid(X, Y)
+                    AiryDisk = np.zeros(XX.shape)
+                    q = np.sqrt((XX-np.mean(Y)) ** 2 + (YY-np.mean(Y)) ** 2)
+                    beta = k * m_aperture_diameter * q / 2 / L
+                    AiryDisk = Io * (2 * j1(beta) / beta) ** 2
+                    AiryDisk_normalized = AiryDisk/AiryDisk.max()
+                    deblurredROI_wiener = wiener(
+                        ROI_reg_norm, psf=AiryDisk, balance=7)
+                    deblurredROI = deblurredROI_wiener
+                    deblurredROI = deblurredROI / deblurredROI.max() * 255.0
+                    enhancedFrame[ROI_coord[0]:ROI_coord[0] + ROI_coord[2],
+                                  ROI_coord[1]:ROI_coord[1] + ROI_coord[3]] = np.abs(deblurredROI)
+                    ROI_enhanced_arr.clear()
+                    ROI_enhanced_arr.append(deblurredROI)
+                    ROI_enhanced_arr_to_save.append(deblurredROI)
+                    enhancedFrames.append(enhancedFrame)
+                    print('Frame analysis time: ', time.time() - t)
+                    displayVarFAT.set(str("{:.3f}".format(time.time() - t)))
 
-        frame = cv2.flip(frame, 1)
+                    try:
+                        inp_roi = ImageTk.PhotoImage(
+                            Image.fromarray(ROI_arr[i].astype(np.uint8)))
+                        out_roi = ImageTk.PhotoImage(Image.fromarray(
+                            ROI_enhanced_arr[i].astype(np.uint8)))
+                    except:
+                        L1.config(image='')
+                        L2.config(image='')
+                        return
 
-        Combined_frames.append(frame)
+                    gray_oldframe = ROI_arr[i].astype(np.uint8)
+                    if(is_blur):
+                        gray_oldframe = GaussianBlur(
+                            gray_oldframe, kernel_gauss, 0)
+                    oldBlurMatrix = np.float32(gray_oldframe)
+                    accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
 
-        out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
-        L1['image'] = inp_roi
-        L2['image'] = out_frame
-        window.update()
-        i += 1
-    concatenatedVid = [np.hstack((ROI_arr[i], np.zeros(
-        (ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
-    write_video(concatenatedVid, 10, 'combined', True)
-    cv2.destroyAllWindows()
+                    # frame = cv2.flip(ROI_enhanced_arr[i].astype(np.uint8), 1)
+                    frame = ROI_enhanced_arr[i].astype(np.uint8)
+                    gray_frame = frame
+
+                    if(is_blur):
+                        newBlur_frame = GaussianBlur(
+                            gray_frame, kernel_gauss, 0)
+                    else:
+                        newBlur_frame = gray_frame
+
+                    newBlurMatrix = np.float32(newBlur_frame)
+                    minusMatrix = absdiff(newBlurMatrix, oldBlurMatrix)
+                    ret, minus_frame = threshold(
+                        minusMatrix, 60, 255.0, THRESH_BINARY)
+                    accumulateWeighted(newBlurMatrix, oldBlurMatrix, 0.02)
+
+                    if(is_blur):
+                        minus_frame = GaussianBlur(
+                            minus_frame, kernel_gauss, 0)
+                    minus_Matrix = np.float32(minus_frame)
+                    if(is_close):
+                        for itr in range(get_current_value1()):
+                            minus_Matrix = dilate(minus_Matrix, kernel_d)
+
+                        for itr in range(get_current_value2()):
+                            minus_Matrix = erode(minus_Matrix, kernel_e)
+
+                    minus_Matrix = np.clip(minus_Matrix, 0, 255)
+                    minus_Matrix = np.array(minus_Matrix, np.uint8)
+                    contours, hierarchy = findContours(
+                        minus_Matrix.copy(), RETR_TREE, CHAIN_APPROX_SIMPLE)
+                    for c in contours:
+                        (x, y, w, h) = boundingRect(c)
+                        rectangle(frame, (x, y), (x + w, y + h),
+                                  (0, 255, 0), 2)
+                        if(is_draw_ct):
+                            drawContours(frame, contours, -1, (0, 255, 255), 2)
+
+                    # frame = cv2.flip(frame, 1)
+
+                    Combined_frames.append(frame)
+
+                    out_frame = ImageTk.PhotoImage(Image.fromarray(frame))
+                    L1['image'] = inp_roi
+                    L2['image'] = out_frame
+                    window.update()
+                    i += 1
+                # concatenatedVid = [np.hstack((ROI_arr[i], np.zeros(
+                #     (ROI_arr[0].shape[0], 10)), Combined_frames[i])).astype(np.float32) for i in range(len(ROI_arr))]
+                # write_video(concatenatedVid, 10, 'combined', True)
+                cv2.destroyAllWindows()
 
 
 # _____________________CREATING BUTTONS______________________
