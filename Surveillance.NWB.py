@@ -37,9 +37,9 @@ isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
 
 parent_dir = os.getcwd()
 directory = "results"
-path = os.path.join(parent_dir, directory)
+out_path = os.path.join(parent_dir, directory)
 try:
-    os.mkdir(path)
+    os.mkdir(out_path)
 except OSError as error:
     pass
 
@@ -59,6 +59,9 @@ current_value2 = IntVar()
 
 # _______________________Global Variables__________________________
 
+path = ""
+flag_for_browse = False
+source_file = ""
 capture = VideoCapture(0)
 frame_width = 0
 frame_height = 0
@@ -66,7 +69,7 @@ ROI_enhanced_arr = []
 Combined_frames = []
 object_frames = []
 iterFPS = 0
-
+top = None
 fps = 0
 fat = 0
 
@@ -117,8 +120,8 @@ label_file_explorer.place(x=20, y=45)
 
 # _____________________HEADER______________________
 
-title = Label(window, text="Surveillance System", font=(
-    "Times New Roman", 18, 'bold'), fg="black", bg="grey64").place(x=495, y=10)
+# title = Label(window, text="Surveillance System", font=(
+# "Times New Roman", 18, 'bold'), fg="black", bg="grey64").place(x=495, y=10)
 #label_file_explorer = Label(window, text = "", fg = "blue")
 # label_file_explorer.place(x=20,y=60)
 
@@ -168,7 +171,63 @@ text_path.place(x=140, y=145)
 displayVar.set(str(0))
 displayVarFAT.set(str(0))
 
+un_entry = StringVar()
+passwd_entry = StringVar()
+ip_add_entry = StringVar()
+
+
 # ___________________Object detection code___________________
+
+
+def open_popup():
+    global path
+    global top
+    top = Toplevel(window)
+    top.geometry("350x250")
+    top.resizable(0, 0)
+    top.title("Choose Video Source")
+    var = IntVar()
+    or_label = Label(top, text="OR", font=(
+        "Times New Roman", 12, 'bold')).place(x=20, y=125)
+    R1 = Radiobutton(top, text="Browse Files", variable=var,
+                     value=1, command=switch_flag_for_browse).place(x=10, y=160)
+    username = Label(top, text="Username").place(x=10, y=10)
+    password = Label(top, text="Passowrd").place(x=10, y=50)
+    ip_address = Label(top, text="IP Address").place(x=10, y=90)
+
+    E1 = Entry(top, bd=2, textvariable=un_entry).place(x=100, y=10)
+    E2 = Entry(top, bd=2, textvariable=passwd_entry).place(x=100, y=50)
+    E3 = Entry(top, bd=2, textvariable=ip_add_entry).place(x=100, y=90)
+
+    ttk.Button(top, text="Submit", command=submit).place(x=250, y=190)
+
+
+def switch_flag_for_browse():
+    global flag_for_browse
+    flag_for_browse = True
+    print("FLAG FOR BROWSE SWITCHED")
+
+
+def browseFiles():
+    source_file = filedialog.askopenfilename(
+        initialdir="/", title="Select a File", filetypes=[('All Files', '.*')], parent=window)
+    label_file_explorer.configure(text="File: "+source_file)
+    path = source_file
+    print(path)
+    return source_file
+
+
+def submit():
+    un = un_entry.get()
+    pw = passwd_entry.get()
+    ip = ip_add_entry.get()
+    url = f'rtsp://{un}:{pw}@{ip}/Streaming/Channels/102'
+    # print(url)
+    path = url
+    un_entry.set("")
+    passwd_entry.set("")
+    ip_add_entry.set("")
+    top.destroy()
 
 
 def loadVideo(videopath):
@@ -176,7 +235,7 @@ def loadVideo(videopath):
     ImagesSequence = []
     i = 0
     start = time.time()
-    capture = cv2.VideoCapture(videopath)
+    capture = cv2.VideoCapture(path)
     frame_width = int(capture.get(3))
     frame_height = int(capture.get(4))
     while(True):
@@ -184,7 +243,7 @@ def loadVideo(videopath):
         i += 1
         end = time.time()
         if ret == True:
-            frame = cv2.flip(frame, 1)
+            #frame = cv2.flip(frame, 1)
             ImagesSequence.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             cv2.imshow('gray', cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             fps = i/(end-start)
@@ -197,17 +256,12 @@ def loadVideo(videopath):
     return ImagesSequence
 
 
-def toggleCapture():
-    global capture
-    capture = VideoCapture(0)
-
-
 def write_video(frames_list, fps, type, detur=False):
     if detur:
         Frames_BGR = [cv2.cvtColor(Frame, cv2.COLOR_GRAY2BGR)
                       for Frame in frames_list]
-    displayVarPath.set(str(f'{path}/{type}.mp4'))
-    out = cv2.VideoWriter(f'{path}/{type}.mp4', cv2.VideoWriter_fourcc(*'MP4V'), fps, (frames_list[0].shape[1],
+    displayVarPath.set(str(f'{out_path}/{type}.mp4'))
+    out = cv2.VideoWriter(f'{out_path}/{type}.mp4', cv2.VideoWriter_fourcc(*'MP4V'), fps, (frames_list[0].shape[1],
                                                                                        frames_list[0].shape[0]))
     for i in range(len(frames_list)):
         if detur:
@@ -215,6 +269,16 @@ def write_video(frames_list, fps, type, detur=False):
         else:
             out.write(frames_list[i])
     out.release()
+
+
+def toggleCapture():
+    global capture
+
+    if flag_for_browse:
+        path = browseFiles()
+
+    print("OBJ DETECT PATH: ", path)
+    capture = VideoCapture(path)
 
 
 def objdetect():
@@ -242,7 +306,7 @@ def objdetect():
     oldBlurMatrix = np.float32(gray_oldframe)
     accumulateWeighted(gray_oldframe, oldBlurMatrix, 0.003)
     ret, frame = capture.read()
-    frame = cv2.flip(frame, 1)
+    #frame = cv2.flip(frame, 1)
     inpframe = ImageTk.PhotoImage(
         Image.fromarray(cvtColor(frame, COLOR_BGR2RGB)))
     gray_frame = cvtColor(frame, COLOR_BGR2GRAY)
@@ -296,6 +360,9 @@ def drawRectangle(inp_frame, frame, minus_frame, start_time, iterFPS):
 
 
 def deturbulence():
+    if flag_for_browse:
+        path = browseFiles()
+    print("deturbulenceT PATH: ", path)
     global ROI_enhanced_arr
     dataType = np.float32
     N_FirstReference = 10
@@ -313,7 +380,7 @@ def deturbulence():
     fno = m_focal_length / m_aperture
 
     # 3 options: 1. via Lucky region for N_firstRef frames, 2. mean of N_firstRef frames 3. first frame.
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(path)
     ImagesSequenceList = []
     ROI_arr_to_save = []
     ROI_enhanced_arr_to_save = []
@@ -337,7 +404,7 @@ def deturbulence():
         if ret:
             fps = itr_fps/(end-start)
             displayVar.set(str(int(fps)))
-            frame = cv2.flip(frame, 1)
+            #frame = cv2.flip(frame, 1)
             # np.append(ImagesSequence, cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
             if(len(ImagesSequenceList) > 10):
@@ -432,7 +499,9 @@ def deturbulence():
 
 
 def endeturbulence():
-    # source_file = browseFiles()
+    if flag_for_browse:
+        path = browseFiles()
+    print("deturbulenceT PATH: ", path)
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -558,7 +627,9 @@ def endeturbulence():
 
 
 def deturbWithObjDetec():
-    # global Combined_frames
+    if flag_for_browse:
+        path = browseFiles()
+    print("deturbulenceT PATH: ", path)
     dataType = np.float32
     N_FirstReference = 10
     L = 11
@@ -574,7 +645,7 @@ def deturbWithObjDetec():
     m_focal_length = 250 * 10 ** -3
     fno = m_focal_length / m_aperture
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(path)
     ImagesSequenceList = []
     ROI_arr_to_save = []
     ROI_enhanced_arr_to_save = []
@@ -598,7 +669,7 @@ def deturbWithObjDetec():
             write_video(concatenatedVid, 2, 'combined', True)
             return
         if ret:
-            frame = cv2.flip(frame, 1)
+            #frame = cv2.flip(frame, 1)
             fps = itr_fps/(end-start)
             displayVar.set(str(int(fps)))
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -745,6 +816,10 @@ def deturbWithObjDetec():
                 # write_video(concatenatedVid, 10, 'combined', True)
                 cv2.destroyAllWindows()
 
+# ____________Receiving Input from User_________________
+
+
+open_popup()
 
 # _____________________CREATING BUTTONS______________________
 C3 = Button(window, text="Object Detection", font=(
@@ -755,6 +830,8 @@ C5 = Button(window, text="Enhanced - TM", font=("Times New Roman",
                                                 12, 'bold'), command=endeturbulence).place(x=1090, y=60)
 C6 = Button(window, text="TM + Detection", font=("Times New Roman",
                                                  12, 'bold'), command=deturbWithObjDetec).place(x=1280, y=10)
+C7 = Button(window, text="Change Input", font=("Times New Roman",
+                                               12, 'bold'), command=open_popup).place(x=1280, y=60)
 
 
 window.state('zoomed')
