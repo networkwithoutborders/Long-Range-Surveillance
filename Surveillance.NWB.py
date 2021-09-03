@@ -36,7 +36,7 @@ isVideoCaptureOpen = False  # boolean flag to keep a check of the video capture
 # ______________________OUTPUT_________________________________________
 
 parent_dir = os.getcwd()
-directory = "results"
+directory = "Results"
 out_path = os.path.join(parent_dir, directory)
 try:
     os.mkdir(out_path)
