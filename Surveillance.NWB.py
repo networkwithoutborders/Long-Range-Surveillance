@@ -188,7 +188,7 @@ def open_popup():
     top.title("Choose Video Source")
     var = IntVar()
     or_label = Label(top, text="OR", font=("Times New Roman", 12, 'bold')).place(x=20, y=125)
-    R1 = Radiobutton(top, text="Browse Files", variable=var, font=("Times New Roman", 12,'bold')
+    R1 = Radiobutton(top, text="Browse Files", variable=var, font=("Times New Roman", 12,'bold'),
                      value=1, command=switch_flag_for_browse).place(x=10, y=160)
     username = Label(top, text="Username",font=("Times New Roman", 12)).place(x=10, y=10)
     password = Label(top, text="Passowrd",font=("Times New Roman", 12)).place(x=10, y=50)
