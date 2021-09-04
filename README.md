@@ -30,7 +30,7 @@ A GUI model to aid long range surveillance.  With our literature, we understand 
 
 GUI
 
-<img src="https://raw.githubusercontent.com/Surveillance-NWB/Surveillance/main/GUI_Screenshots/GUI_updated.png" alt="check box functionality" style="height: 200px; width:300px;"/>
+<img src="https://raw.githubusercontent.com/Surveillance-NWB/Surveillance/main/GUI_Screenshots/GUI_updated.png" alt="check box functionality" style="height: 350px; width:500px;"/>
 
 
 
