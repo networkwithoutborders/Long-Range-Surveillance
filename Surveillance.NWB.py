@@ -187,19 +187,18 @@ def open_popup():
     top.resizable(0, 0)
     top.title("Choose Video Source")
     var = IntVar()
-    or_label = Label(top, text="OR", font=(
-        "Times New Roman", 12, 'bold')).place(x=20, y=125)
-    R1 = Radiobutton(top, text="Browse Files", variable=var,
+    or_label = Label(top, text="OR", font=("Times New Roman", 12, 'bold')).place(x=20, y=125)
+    R1 = Radiobutton(top, text="Browse Files", variable=var, font=("Times New Roman", 12,'bold')
                      value=1, command=switch_flag_for_browse).place(x=10, y=160)
-    username = Label(top, text="Username").place(x=10, y=10)
-    password = Label(top, text="Passowrd").place(x=10, y=50)
-    ip_address = Label(top, text="IP Address").place(x=10, y=90)
+    username = Label(top, text="Username",font=("Times New Roman", 12)).place(x=10, y=10)
+    password = Label(top, text="Passowrd",font=("Times New Roman", 12)).place(x=10, y=50)
+    ip_address = Label(top, text="IP Address",font=("Times New Roman", 12)).place(x=10, y=90)
 
     E1 = Entry(top, bd=2, textvariable=un_entry).place(x=100, y=10)
     E2 = Entry(top, bd=2, textvariable=passwd_entry).place(x=100, y=50)
     E3 = Entry(top, bd=2, textvariable=ip_add_entry).place(x=100, y=90)
 
-    ttk.Button(top, text="Submit", command=submit).place(x=250, y=190)
+    ttk.Button(top, text="Submit", font=("Times New Roman", 12,'bold'), command=submit).place(x=250, y=190)
 
 
 def switch_flag_for_browse():
