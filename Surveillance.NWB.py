@@ -18,7 +18,7 @@ import keyboard
 from pathlib import Path
 from utils import *
 import time
-from skimage.restoration import wiener, richardson_lucy
+from skimage.restoration import wiener
 from scipy.special import j1
 
 
