@@ -8,8 +8,7 @@ A GUI model to aid long range surveillance.  With our literature, we understand 
 
 ## Work under Progress
 
-1. Enabling IP Camera in-built modules for better monitoring and control
-2. Object detection must be processed after turbulence mitigaiton in real time without any / minimal lag
+Enabling IP Camera in-built modules for better monitoring and control
 
 ## Help Required
 
