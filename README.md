@@ -27,9 +27,9 @@ Enabling IP Camera in-built modules for better monitoring and control
 ## Screenshot
 
 
-GUI
+Sample images of the GUI
 
-<img src="https://raw.githubusercontent.com/Surveillance-NWB/Surveillance/main/GUI_Screenshots/GUI_Choice.png" alt="check box functionality" style="height: 300px; width:350px;"/>
+<img src="https://raw.githubusercontent.com/Surveillance-NWB/Surveillance/main/GUI_Screenshots/GUI_Choice.png" alt="check box functionality" style="height: 275px; width:325px;"/>
 
 <img src="https://raw.githubusercontent.com/Surveillance-NWB/Surveillance/main/GUI_Screenshots/GUI_updated.png" alt="check box functionality" style="height: 350px; width:650px;"/>
 
